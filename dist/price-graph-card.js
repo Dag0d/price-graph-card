@@ -2173,7 +2173,7 @@ function hn() {
 }
 //#endregion
 //#region src/price-graph-card.ts
-var gn = () => window.customCardHelpers || null, _n = "2026.8.1";
+var gn = () => window.customCardHelpers || null, _n = "2026.8.2";
 function vn(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
