@@ -1,4 +1,4 @@
-import { SIMPLE_HIGH_COLOR, SIMPLE_LOW_COLOR, TICK_STEPS } from "./const";
+import { DETAILED_PRICE_LEVELS, SIMPLE_HIGH_COLOR, SIMPLE_LOW_COLOR, SIMPLE_PRICE_LEVELS, TICK_STEPS } from "./const";
 import { safeNumber } from "./data";
 import { localize } from "./i18n";
 import { startOfLocalDay } from "./time";
@@ -86,40 +86,41 @@ export function getTimelinePastOverlayColor(el) {
 
 
 
-export function zoneColor(cfg, price, thr) {
-  if (!cfg?.detailed_colors) {
-    return price <= (thr?.avg ?? 0) ? SIMPLE_LOW_COLOR : SIMPLE_HIGH_COLOR;
+export function normalizePriceLevelTarget(value, detailed = false) {
+  const raw = String(value || "");
+  if (detailed) {
+    if (DETAILED_PRICE_LEVELS.includes(raw)) return raw;
+    return raw === "above_avg" ? "expensive" : "cheap";
   }
+  if (SIMPLE_PRICE_LEVELS.includes(raw)) return raw;
+  return raw === "expensive" || raw === "very_expensive" ? "above_avg" : "below_avg";
+}
+
+export function priceLevelKey(price, thr, detailed = !!thr?.detailed) {
+  if (!thr || !Number.isFinite(price) || !Number.isFinite(thr.avg)) return "";
+  if (!detailed) return price <= thr.avg ? "below_avg" : "above_avg";
+  if (thr?.fixed !== null && thr?.fixed !== undefined && price >= thr.fixed) return "very_expensive";
+  if (price <= thr.p20) return "cheap";
+  if (price <= thr.avg) return "normal";
+  if (price <= thr.p70) return "expensive";
+  return "very_expensive";
+}
+
+export function zoneColor(cfg, price, thr) {
+  const level = priceLevelKey(price, thr, !!cfg?.detailed_colors);
+  if (!cfg?.detailed_colors) return level === "below_avg" ? SIMPLE_LOW_COLOR : SIMPLE_HIGH_COLOR;
   const cheap = normalizeColor(cfg.color_cheap, "#CDDC39");
   const norm = normalizeColor(cfg.color_normal, "#FF9800");
   const exp = normalizeColor(cfg.color_expensive, "#F44336");
   const veryExp = normalizeColor(cfg.color_very_expensive, "#B71C1C");
-
-  if (thr?.fixed !== null && thr?.fixed !== undefined) {
-    if (price >= thr.fixed) return veryExp;
-  }
-  if (price <= thr.p20) return cheap;
-  if (price <= thr.avg) return norm;
-  if (price <= thr.p70) return exp;
-  return veryExp;
+  return level === "cheap" ? cheap : (level === "normal" ? norm : (level === "expensive" ? exp : veryExp));
 }
 
 
 
 export function zoneLabel(price, thr, lang) {
-  if (!thr || !Number.isFinite(thr.avg)) return "";
-  if (!thr.detailed) {
-    return price <= thr.avg
-      ? localize("region_below_avg", lang)
-      : localize("region_above_avg", lang);
-  }
-  if (thr?.fixed !== null && thr?.fixed !== undefined) {
-    if (price >= thr.fixed) return localize("region_very_expensive", lang);
-  }
-  if (price <= thr.p20) return localize("region_cheap", lang);
-  if (price <= thr.avg) return localize("region_normal", lang);
-  if (price <= thr.p70) return localize("region_expensive", lang);
-  return localize("region_very_expensive", lang);
+  const level = priceLevelKey(price, thr);
+  return level ? localize(`region_${level}`, lang) : "";
 }
 
 
@@ -268,4 +269,3 @@ export function appendSvgLineSegments(svg, svgNS, segments) {
     svg.appendChild(line);
   }
 }
-

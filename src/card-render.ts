@@ -6,7 +6,7 @@ import { CARD_CSS } from "./card-styles";
 import { formatDisplayValue, roundTo } from "./format";
 import { normalizeColor, zoneColor, zoneLabel } from "./graph";
 import { getLang, localize } from "./i18n";
-import { buildCurrentTodayContext, getDayPriceMetricText, getRangeDayLabel } from "./pricing";
+import { buildCurrentTodayContext, getDayPriceMetricText, getNextPriceLevelTimeText, getRangeDayLabel } from "./pricing";
 import { resolveRuntimeConfig } from "./runtime-config";
 import { getHaTimeZone } from "./time";
 import { formatUnitByMode, getDisplayUnit } from "./units";
@@ -106,6 +106,14 @@ export function renderCard() {
           color: configuredColor || "var(--primary-text-color)",
           item: it,
         };
+      }
+      if (it.source === "next_price_level") {
+        const value = getNextPriceLevelTimeText(cfg, st.attributes, timelineAll, it.price_level, lang, timeZone);
+        const label = it.label || localize("content_next_price_level_label", lang);
+        if (target === "header") {
+          return { variant: "metric", top: label, main: value, color: null };
+        }
+        return { variant: "info", label, value, color: null, item: it };
       }
       if (it.source === "current_price") {
         if (!currentPoint) return null;

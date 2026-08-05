@@ -18,6 +18,7 @@ import {
   headerDefaultSource,
   headerSourceOptions,
   itemUnitDisplayOptions,
+  nextPriceLevelOptions,
   priceRangeDayOptions,
 } from "./editor-options";
 import { sanitizeEditorConfig } from "./editor-sanitize";
@@ -163,6 +164,10 @@ class PriceGraphCardEditor extends LitElement {
       ? sensorCurrency
       : (override === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : override);
     return itemUnitDisplayOptions(this._config, effectiveCurrency, lang);
+  }
+
+  _nextPriceLevelOptions(lang) {
+    return nextPriceLevelOptions(!!this._config?.detailed_colors, lang);
   }
 
   _headerSourceOptions(lang) {

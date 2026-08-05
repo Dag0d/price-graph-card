@@ -550,10 +550,16 @@ var Se = "price-graph-card", Ce = "price-graph-card-editor", we = "#1AC5AA", Te 
 	"attribute",
 	"entity",
 	"price_level",
+	"next_price_level",
 	"current_price",
 	"price_range",
 	"avg_price"
-]), Ae = Object.freeze(["title", ...ke]), je = Object.freeze(["per_kwh", "value_only"]), Me = Object.freeze([
+]), Ae = Object.freeze(["title", ...ke]), je = Object.freeze(["per_kwh", "value_only"]), Me = Object.freeze(["below_avg", "above_avg"]), Ne = Object.freeze([
+	"cheap",
+	"normal",
+	"expensive",
+	"very_expensive"
+]), Pe = Object.freeze([
 	[.08, .01],
 	[.16, .02],
 	[.3, .05],
@@ -564,7 +570,7 @@ var Se = "price-graph-card", Ce = "price-graph-card-editor", we = "#1AC5AA", Te 
 	[16, 2],
 	[35, 5],
 	[80, 10]
-]), Ne = "M19.14,12.94C19.18,12.64 19.2,12.33 19.2,12C19.2,11.68 19.18,11.36 19.13,11.06L21.19,9.45C21.37,9.31 21.42,9.05 21.3,8.84L19.3,5.38C19.18,5.16 18.92,5.08 18.69,5.16L16.26,6.14C15.76,5.76 15.23,5.45 14.62,5.22L14.25,2.64C14.21,2.4 14,2.22 13.75,2.22H10.25C10,2.22 9.79,2.4 9.76,2.64L9.38,5.22C8.77,5.45 8.24,5.76 7.74,6.14L5.31,5.16C5.08,5.08 4.82,5.16 4.7,5.38L2.7,8.84C2.57,9.05 2.63,9.31 2.81,9.45L4.86,11.06C4.82,11.36 4.8,11.69 4.8,12C4.8,12.31 4.82,12.64 4.87,12.94L2.81,14.55C2.63,14.69 2.57,14.95 2.7,15.16L4.7,18.62C4.82,18.84 5.08,18.92 5.31,18.84L7.74,17.86C8.24,18.24 8.77,18.55 9.38,18.78L9.76,21.36C9.79,21.6 10,21.78 10.25,21.78H13.75C14,21.78 14.21,21.6 14.24,21.36L14.62,18.78C15.23,18.55 15.76,18.24 16.26,17.86L18.69,18.84C18.92,18.92 19.18,18.84 19.3,18.62L21.3,15.16C21.42,14.95 21.37,14.69 21.19,14.55L19.14,12.94M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5Z", Pe = Object.freeze({
+]), Fe = "M19.14,12.94C19.18,12.64 19.2,12.33 19.2,12C19.2,11.68 19.18,11.36 19.13,11.06L21.19,9.45C21.37,9.31 21.42,9.05 21.3,8.84L19.3,5.38C19.18,5.16 18.92,5.08 18.69,5.16L16.26,6.14C15.76,5.76 15.23,5.45 14.62,5.22L14.25,2.64C14.21,2.4 14,2.22 13.75,2.22H10.25C10,2.22 9.79,2.4 9.76,2.64L9.38,5.22C8.77,5.45 8.24,5.76 7.74,6.14L5.31,5.16C5.08,5.08 4.82,5.16 4.7,5.38L2.7,8.84C2.57,9.05 2.63,9.31 2.81,9.45L4.86,11.06C4.82,11.36 4.8,11.69 4.8,12C4.8,12.31 4.82,12.64 4.87,12.94L2.81,14.55C2.63,14.69 2.57,14.95 2.7,15.16L4.7,18.62C4.82,18.84 5.08,18.92 5.31,18.84L7.74,17.86C8.24,18.24 8.77,18.55 9.38,18.78L9.76,21.36C9.79,21.6 10,21.78 10.25,21.78H13.75C14,21.78 14.21,21.6 14.24,21.36L14.62,18.78C15.23,18.55 15.76,18.24 16.26,17.86L18.69,18.84C18.92,18.92 19.18,18.84 19.3,18.62L21.3,15.16C21.42,14.95 21.37,14.69 21.19,14.55L19.14,12.94M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5Z", Ie = Object.freeze({
 	entity: "editor_entity",
 	view_mode: "editor_view_mode",
 	decimals: "editor_decimals",
@@ -600,12 +606,12 @@ var Se = "price-graph-card", Ce = "price-graph-card-editor", we = "#1AC5AA", Te 
 	color_normal: "editor_color_normal",
 	color_expensive: "editor_color_expensive",
 	color_very_expensive: "editor_color_very_expensive"
-}), Fe = /* @__PURE__ */ new Set([
+}), Le = /* @__PURE__ */ new Set([
 	"tomorrow",
 	"two_days",
 	"selected"
 ]);
-function Ie() {
+function Re() {
 	return {
 		label: "",
 		source: "attribute",
@@ -614,11 +620,12 @@ function Ie() {
 		show_unit: !1,
 		unit_display_mode: "per_kwh",
 		use_color: !1,
+		price_level: "",
 		range_day: "today",
-		actions: Le()
+		actions: ze()
 	};
 }
-function Le() {
+function ze() {
 	return {
 		enabled: !1,
 		tap_action: { action: "more-info" },
@@ -628,7 +635,7 @@ function Le() {
 		target_entity: ""
 	};
 }
-function Re(e = "title", t = "") {
+function Be(e = "title", t = "") {
 	return {
 		label: t,
 		source: e,
@@ -637,14 +644,15 @@ function Re(e = "title", t = "") {
 		show_unit: !1,
 		unit_display_mode: "per_kwh",
 		use_color: !1,
+		price_level: "",
 		time_overwrite: !1,
 		range_day: "today"
 	};
 }
-var ze = {
+var Ve = {
 	type: `custom:${Se}`,
-	title_item_left: Re("title", ""),
-	title_item_right: Re("attribute", ""),
+	title_item_left: Be("title", ""),
+	title_item_right: Be("attribute", ""),
 	entity: "",
 	view_mode: "graph",
 	decimals: 1,
@@ -676,92 +684,94 @@ var ze = {
 	content_items_position: "top",
 	content_items_max_cols: 4
 };
-function Be(e) {
+function He(e) {
 	let t = {
-		...ze,
+		...Ve,
 		...e || {}
 	};
 	return t.view_mode !== "graph" && t.view_mode !== "timeline" && (t.view_mode = "graph"), t.content_items_position !== "bottom" && (t.content_items_position = "top"), t.content_items_max_cols = Number(t.content_items_max_cols) === 3 ? 3 : 4, t;
 }
-function Ve(e) {
-	return Fe.has(e) ? e : "today";
+function Ue(e) {
+	return Le.has(e) ? e : "today";
 }
-function He(e) {
+function We(e) {
 	return ke.includes(e) ? e : "attribute";
 }
-function Ue(e, t = "title") {
+function Ge(e, t = "title") {
 	let n = Ae.includes(t) ? t : "attribute";
 	return Ae.includes(e) ? e : n;
 }
-function We(e) {
+function Ke(e) {
 	return je.includes(e) ? e : "per_kwh";
 }
-function Ge(e, t = "none") {
+function qe(e, t = "none") {
 	let n = e && typeof e == "object" ? e : {}, r = typeof n.action == "string" && n.action ? n.action : t;
 	return {
 		...n,
 		action: r
 	};
 }
-function Ke(e) {
+function Je(e) {
 	return e && typeof e == "object" && e.enabled ? {
 		enabled: !0,
-		tap_action: Ge(e.tap_action, "more-info"),
-		hold_action: Ge(e.hold_action, "none"),
-		double_tap_action: Ge(e.double_tap_action, "none"),
+		tap_action: qe(e.tap_action, "more-info"),
+		hold_action: qe(e.hold_action, "none"),
+		double_tap_action: qe(e.double_tap_action, "none"),
 		use_target_entity: !!e.use_target_entity || !!String(e.target_entity || "").trim(),
 		target_entity: String(e.target_entity || "").trim()
-	} : Le();
+	} : ze();
 }
 function W(e) {
 	let t = [];
 	if (!Array.isArray(e)) return t;
 	for (let n of e) {
 		if (!n || typeof n != "object") continue;
-		let e = He(n.source), r = e === "price_range" || e === "avg_price";
+		let e = We(n.source), r = e === "price_range" || e === "avg_price";
 		t.push({
 			label: String(n.label || "").trim(),
 			source: e,
 			entity: String(n.entity || "").trim(),
 			attribute: String(n.attribute || "").trim(),
 			show_unit: n.show_unit === void 0 ? r : !!n.show_unit,
-			unit_display_mode: We(n.unit_display_mode),
+			unit_display_mode: Ke(n.unit_display_mode),
 			use_color: !!n.use_color,
-			range_day: Ve(n.range_day),
-			actions: Ke(n.actions)
+			price_level: String(n.price_level || "").trim(),
+			range_day: Ue(n.range_day),
+			actions: Je(n.actions)
 		});
 	}
 	return t;
 }
 function G(e, t = "title", n = "") {
-	if (!e || typeof e != "object") return Re(t, n);
-	let r = Ue(e.source, t), i = r === "price_range" || r === "avg_price";
+	if (!e || typeof e != "object") return Be(t, n);
+	let r = Ge(e.source, t), i = r === "price_range" || r === "avg_price";
 	return {
 		label: String(e.label || n || "").trim(),
 		source: r,
 		entity: String(e.entity || "").trim(),
 		attribute: String(e.attribute || "").trim(),
 		show_unit: e.show_unit === void 0 ? i : !!e.show_unit,
-		unit_display_mode: We(e.unit_display_mode),
+		unit_display_mode: Ke(e.unit_display_mode),
 		use_color: !!e.use_color,
+		price_level: String(e.price_level || "").trim(),
 		time_overwrite: !!e.time_overwrite,
-		range_day: Ve(e.range_day)
+		range_day: Ue(e.range_day)
 	};
 }
-function qe(e, t, n = !1) {
+function Ye(e, t, n = !1) {
 	let { source: r } = e;
-	r === "entity" ? (e.entity && (t.entity = e.entity), e.show_unit && (t.show_unit = !0), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "attribute" ? (e.attribute && (t.attribute = e.attribute), e.show_unit && (t.show_unit = !0), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "current_price" ? (n && e.time_overwrite && (t.time_overwrite = !0), e.show_unit && (t.show_unit = !0), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "price_range" || r === "avg_price" ? (e.range_day !== "today" && (t.range_day = e.range_day), e.show_unit || (t.show_unit = !1), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "price_level" && e.use_color && (t.use_color = !0);
+	r === "entity" ? (e.entity && (t.entity = e.entity), e.show_unit && (t.show_unit = !0), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "attribute" ? (e.attribute && (t.attribute = e.attribute), e.show_unit && (t.show_unit = !0), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "current_price" ? (n && e.time_overwrite && (t.time_overwrite = !0), e.show_unit && (t.show_unit = !0), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "price_range" || r === "avg_price" ? (e.range_day !== "today" && (t.range_day = e.range_day), e.show_unit || (t.show_unit = !1), e.show_unit && e.unit_display_mode !== "per_kwh" && (t.unit_display_mode = e.unit_display_mode)) : r === "price_level" ? e.use_color && (t.use_color = !0) : r === "next_price_level" && e.price_level && (t.price_level = e.price_level);
 }
-function Je(e, t = "title") {
+function Xe(e, t = "title") {
 	let n = G(e, t, ""), r = {};
-	return n.label && (n.source !== "current_price" || n.time_overwrite) && (r.label = n.label), n.source !== t && (r.source = n.source), qe(n, r, !0), !Object.keys(r).some((e) => e !== "source") && n.source === t ? null : r;
+	return n.label && (n.source !== "current_price" || n.time_overwrite) && (r.label = n.label), n.source !== t && (r.source = n.source), Ye(n, r, !0), !Object.keys(r).some((e) => e !== "source") && n.source === t ? null : r;
 }
-function Ye(e) {
+function Ze(e) {
 	if (!e || typeof e != "object") return null;
 	let t = W([e])[0];
 	if (!t) return null;
 	let n = {};
-	if (t.label && (n.label = t.label), t.source !== "attribute" && (n.source = t.source), qe(t, n), t.actions?.enabled) {
+	if (t.label && (n.label = t.label), t.source !== "attribute" && (n.source = t.source), Ye(t, n), t.actions?.enabled) {
 		let e = { enabled: !0 };
 		e.tap_action = t.actions.tap_action || { action: "more-info" }, t.actions.hold_action?.action && t.actions.hold_action.action !== "none" && (e.hold_action = t.actions.hold_action), t.actions.double_tap_action?.action && t.actions.double_tap_action.action !== "none" && (e.double_tap_action = t.actions.double_tap_action), t.actions.use_target_entity && (e.use_target_entity = !0, t.actions.target_entity && (e.target_entity = t.actions.target_entity)), n.actions = e;
 	}
@@ -769,7 +779,7 @@ function Ye(e) {
 }
 //#endregion
 //#region src/i18n.ts
-var Xe = Object.freeze({
+var Qe = Object.freeze({
 	de: {
 		waiting_ha: "Warte auf Home Assistant…",
 		entity_not_found: "Entity nicht gefunden",
@@ -819,6 +829,7 @@ var Xe = Object.freeze({
 		editor_content_source_entity: "Entity-Wert",
 		editor_content_source_title: "Titel",
 		editor_content_source_price: "Preislevel",
+		editor_content_source_next_price_level: "Nächstes Preisniveau",
 		editor_content_source_current: "Aktueller Preis",
 		editor_content_source_price_range: "Preisspanne",
 		editor_content_source_avg_price: "Durchschnittspreis",
@@ -829,6 +840,7 @@ var Xe = Object.freeze({
 		editor_content_show_unit: "Einheit anzeigen",
 		editor_current_price_time_overwrite: "Uhrzeit überschreiben",
 		editor_content_use_color: "Farbe des Preislevels",
+		editor_next_price_level: "Gesuchtes Preisniveau",
 		editor_content_add_slot: "Slot hinzufügen",
 		editor_content_remove_slot: "Slot entfernen",
 		editor_slot_actions_enabled: "Eigene Interaktionen",
@@ -838,6 +850,7 @@ var Xe = Object.freeze({
 		editor_header_title_left: "Titel links",
 		editor_header_title_right: "Titel rechts",
 		content_price_level_label: "Aktuelles Preisniveau",
+		content_next_price_level_label: "Nächstes Preisniveau",
 		content_current_price_label: "Aktueller Preis",
 		content_price_range_label: "Preisspanne",
 		content_avg_price_label: "Durchschnittspreis",
@@ -893,6 +906,7 @@ var Xe = Object.freeze({
 		label_two_days: "2 Tage",
 		tomorrow_pending: "Daten von morgen noch nicht verfügbar",
 		label_now: "Jetzt",
+		next_price_level_tomorrow: "Morgen {time}",
 		two_day_mode_span: "Zwei Tage hintereinander",
 		two_day_mode_overlay: "Morgen überlagern (Vergleich)",
 		panel_content: "Ansicht",
@@ -959,6 +973,7 @@ var Xe = Object.freeze({
 		editor_content_source_entity: "Entity value",
 		editor_content_source_title: "Title",
 		editor_content_source_price: "Price level",
+		editor_content_source_next_price_level: "Next price level",
 		editor_content_source_current: "Current price",
 		editor_content_source_price_range: "Price range",
 		editor_content_source_avg_price: "Average price",
@@ -969,6 +984,7 @@ var Xe = Object.freeze({
 		editor_content_show_unit: "Show unit",
 		editor_current_price_time_overwrite: "Overwrite time",
 		editor_content_use_color: "Use level color",
+		editor_next_price_level: "Target price level",
 		editor_content_add_slot: "Add slot",
 		editor_content_remove_slot: "Remove slot",
 		editor_slot_actions_enabled: "Own interactions",
@@ -978,6 +994,7 @@ var Xe = Object.freeze({
 		editor_header_title_left: "Title left",
 		editor_header_title_right: "Title right",
 		content_price_level_label: "Current price level",
+		content_next_price_level_label: "Next price level",
 		content_current_price_label: "Current price",
 		content_price_range_label: "Price range",
 		content_avg_price_label: "Average price",
@@ -1033,6 +1050,7 @@ var Xe = Object.freeze({
 		label_two_days: "2 Days",
 		tomorrow_pending: "Tomorrow's data will be provided later.",
 		label_now: "Now",
+		next_price_level_tomorrow: "Tomorrow {time}",
 		two_day_mode_span: "Two days in a row",
 		two_day_mode_overlay: "Overlay tomorrow (compare)",
 		panel_content: "View",
@@ -1050,21 +1068,21 @@ var Xe = Object.freeze({
 		content_items_position_top: "Top (above graph/timeline)",
 		content_items_position_bottom: "Bottom (below day buttons)"
 	}
-}), K = /* @__PURE__ */ new Map(), Ze = /* @__PURE__ */ new Map();
-function Qe(e) {
+}), K = /* @__PURE__ */ new Map(), $e = /* @__PURE__ */ new Map();
+function et(e) {
 	let t = String(e || "en").trim().toLowerCase();
 	return t && t.split("-")[0] || "en";
 }
-async function $e(e) {
-	let t = Qe(e);
+async function tt(e) {
+	let t = et(e);
 	if (K.has(t)) return K.get(t);
-	if (Ze.has(t)) return Ze.get(t);
+	if ($e.has(t)) return $e.get(t);
 	let n = (async () => {
 		try {
-			let e = Xe[t];
+			let e = Qe[t];
 			if (!e) {
 				if (t !== "en") {
-					let e = await $e("en");
+					let e = await tt("en");
 					return K.set(t, e || {}), e;
 				}
 				return K.set(t, {}), K.get(t);
@@ -1072,25 +1090,25 @@ async function $e(e) {
 			K.set(t, e && typeof e == "object" ? e : {});
 		} catch {
 			if (t !== "en") {
-				let e = await $e("en");
+				let e = await tt("en");
 				return K.set(t, e || {}), e;
 			}
 			K.set(t, {});
 		} finally {
-			Ze.delete(t);
+			$e.delete(t);
 		}
 		return K.get(t);
 	})();
-	return Ze.set(t, n), n;
+	return $e.set(t, n), n;
 }
 function q(e, t, n = {}) {
-	let r = Qe(t), i = (K.get(r) || {})?.[e] || e;
+	let r = et(t), i = (K.get(r) || {})?.[e] || e;
 	if (!n) return i;
 	for (let e in n) Object.prototype.hasOwnProperty.call(n, e) && (i = i.replace(`{${e}}`, n[e]));
 	return i;
 }
 function J(e) {
-	return Qe(e?.locale?.language || e?.language || "en");
+	return et(e?.locale?.language || e?.language || "en");
 }
 //#endregion
 //#region src/format.ts
@@ -1098,31 +1116,31 @@ function Y(e, t = 1) {
 	let n = 10 ** t;
 	return Math.round(e * n) / n;
 }
-function et(e, t) {
+function nt(e, t) {
 	if (e == null || typeof e == "string" && !e.trim()) return "—";
 	if (typeof e == "boolean") return String(e);
 	if (typeof e == "number" && Number.isFinite(e)) return Y(e, t).toString();
 	let n = Number(e);
 	return Number.isFinite(n) ? Y(n, t).toString() : String(e);
 }
-function tt(e) {
+function rt(e) {
 	let t = Y(e, 3);
 	return Number(t.toFixed(3)).toString();
 }
-function nt(e) {
+function it(e) {
 	return String(e).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 //#endregion
 //#region src/time.ts
-function rt(e) {
+function at(e) {
 	return new Date(e.getFullYear(), e.getMonth(), e.getDate(), 0, 0, 0, 0);
 }
-function it(e) {
+function ot(e) {
 	return String(e).padStart(2, "0");
 }
-var at = /* @__PURE__ */ new Map();
-function ot(e) {
-	let t = e || "UTC", n = at.get(t);
+var st = /* @__PURE__ */ new Map();
+function ct(e) {
+	let t = e || "UTC", n = st.get(t);
 	return n || (n = new Intl.DateTimeFormat("en-GB", {
 		timeZone: t,
 		year: "numeric",
@@ -1133,41 +1151,41 @@ function ot(e) {
 		second: "2-digit",
 		hour12: !1,
 		hourCycle: "h23"
-	}), at.set(t, n)), n;
+	}), st.set(t, n)), n;
 }
-function st(e, t) {
-	let n = ot(t).formatToParts(e), r = {};
+function lt(e, t) {
+	let n = ct(t).formatToParts(e), r = {};
 	for (let e of n) e.type === "year" ? r.year = Number(e.value) : e.type === "month" ? r.month = Number(e.value) : e.type === "day" ? r.day = Number(e.value) : e.type === "hour" ? r.hour = Number(e.value) : e.type === "minute" ? r.minute = Number(e.value) : e.type === "second" && (r.second = Number(e.value));
 	return r;
 }
-function ct(e, t, n, r, i, a, o, s) {
+function ut(e, t, n, r, i, a, o, s) {
 	let c = Date.UTC(e, t - 1, n, r, i, a, 0), l = c;
 	for (let e = 0; e < 4; e++) {
-		let e = st(new Date(l), s), t = c - Date.UTC(e.year, e.month - 1, e.day, e.hour, e.minute, e.second, 0);
+		let e = lt(new Date(l), s), t = c - Date.UTC(e.year, e.month - 1, e.day, e.hour, e.minute, e.second, 0);
 		if (!t) break;
 		l += t;
 	}
 	return new Date(l + (o || 0));
 }
-function lt(e, t, n) {
-	let r = st(e, n);
-	return ct(r.year, r.month, r.day + t, 0, 0, 0, 0, n);
-}
-function ut(e, t) {
-	return lt(e, 0, t);
-}
 function dt(e, t, n) {
-	let r = st(e, n), i = st(t, n);
-	return ct(i.year, i.month, i.day, r.hour, r.minute, r.second, e.getMilliseconds(), n);
+	let r = lt(e, n);
+	return ut(r.year, r.month, r.day + t, 0, 0, 0, 0, n);
 }
 function ft(e, t) {
-	let n = st(e, t);
-	return `${it(n.hour)}:${it(n.minute)}`;
+	return dt(e, 0, t);
 }
-function pt(e = Date.now()) {
+function pt(e, t, n) {
+	let r = lt(e, n), i = lt(t, n);
+	return ut(i.year, i.month, i.day, r.hour, r.minute, r.second, e.getMilliseconds(), n);
+}
+function mt(e, t) {
+	let n = lt(e, t);
+	return `${ot(n.hour)}:${ot(n.minute)}`;
+}
+function ht(e = Date.now()) {
 	return 6e4 - e % 6e4 + 25;
 }
-function mt(e) {
+function gt(e) {
 	return e?.config?.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 //#endregion
@@ -1177,18 +1195,18 @@ function X(e) {
 	let t = Number(e);
 	return Number.isFinite(t) ? t : null;
 }
-function ht(e, t) {
+function _t(e, t) {
 	return X(e?.[t]);
 }
-function gt(e) {
+function vt(e) {
 	return e.length ? e.reduce((e, t) => e + t, 0) / e.length : null;
 }
-function _t(e, t) {
+function yt(e, t) {
 	if (!e.length) return null;
 	let n = (e.length - 1) * t, r = Math.floor(n), i = n - r;
 	return e[r + 1] === void 0 ? e[r] : e[r] + i * (e[r + 1] - e[r]);
 }
-function vt(e) {
+function bt(e) {
 	if (!e || typeof e != "object") return [];
 	let t = e.data;
 	if (!Array.isArray(t) || !t.length) return [];
@@ -1204,19 +1222,190 @@ function vt(e) {
 	return n.sort((e, t) => e.start.getTime() - t.start.getTime()), n;
 }
 function Z(e, t = /* @__PURE__ */ new Date(), n = 0, r = "UTC") {
-	let i = lt(t, n, r), a = lt(t, n + 1, r);
+	let i = dt(t, n, r), a = dt(t, n + 1, r);
 	return e.filter((e) => e.start >= i && e.start < a);
 }
 //#endregion
+//#region src/graph.ts
+function Q(e, t, n) {
+	return Math.max(t, Math.min(n, e));
+}
+function xt(e, t = "#ffffff") {
+	if (typeof e == "string" && e.trim()) return e.trim();
+	if (Array.isArray(e) && e.length >= 3) {
+		let t = X(e[0]), n = X(e[1]), r = X(e[2]);
+		if (t !== null && n !== null && r !== null) return `rgb(${Q(Math.round(t), 0, 255)}, ${Q(Math.round(n), 0, 255)}, ${Q(Math.round(r), 0, 255)})`;
+	}
+	if (e && typeof e == "object") {
+		let t = X(e.r ?? e.red), n = X(e.g ?? e.green), r = X(e.b ?? e.blue);
+		if (t !== null && n !== null && r !== null) return `rgb(${Q(Math.round(t), 0, 255)}, ${Q(Math.round(n), 0, 255)}, ${Q(Math.round(r), 0, 255)})`;
+	}
+	return t;
+}
+function St(e, t = "#ffffff") {
+	if (!e) return t;
+	let n = String(e).trim();
+	if (n.startsWith("#") || (n = `#${n}`), /^#([0-9a-f]{3})$/i.test(n)) {
+		let e = n.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+		if (e) return `#${e[1]}${e[1]}${e[2]}${e[2]}${e[3]}${e[3]}`.toLowerCase();
+	}
+	return /^#([0-9a-f]{6})$/i.test(n) ? n.toLowerCase() : t;
+}
+function Ct(e) {
+	if (typeof e != "string") return null;
+	let t = e.trim().match(/^rgba?\(([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+	return t ? [
+		Q(Number(t[1]), 0, 255),
+		Q(Number(t[2]), 0, 255),
+		Q(Number(t[3]), 0, 255)
+	] : null;
+}
+function wt(e, t) {
+	if (!e || !t) return "";
+	let n = document.createElement("span");
+	n.style.display = "none", n.style.color = t, e.appendChild(n);
+	let r = getComputedStyle(n).color || "";
+	return n.remove(), r;
+}
+function Tt(e) {
+	if (!e) return "rgba(38, 14, 25, 0.6)";
+	let t = getComputedStyle(e), n = t.getPropertyValue("--card-background-color")?.trim() || "";
+	n ||= t.backgroundColor || "", (!n || n === "transparent" || n === "rgba(0, 0, 0, 0)") && (n = getComputedStyle(document.documentElement).getPropertyValue("--card-background-color")?.trim() || "");
+	let r = Ct(wt(e, n || "#ffffff"));
+	if (!r) return "rgba(38, 14, 25, 0.6)";
+	let [i, a, o] = r.map((e) => e / 255);
+	return .2126 * i + .7152 * a + .0722 * o < .5 ? "rgba(38, 14, 25, 0.6)" : "rgba(235, 238, 241, 0.7)";
+}
+function Et(e, t = !1) {
+	let n = String(e || "");
+	return t ? Ne.includes(n) ? n : n === "above_avg" ? "expensive" : "cheap" : Me.includes(n) ? n : n === "expensive" || n === "very_expensive" ? "above_avg" : "below_avg";
+}
+function Dt(e, t, n = !!t?.detailed) {
+	return !t || !Number.isFinite(e) || !Number.isFinite(t.avg) ? "" : n ? t?.fixed !== null && t?.fixed !== void 0 && e >= t.fixed ? "very_expensive" : e <= t.p20 ? "cheap" : e <= t.avg ? "normal" : e <= t.p70 ? "expensive" : "very_expensive" : e <= t.avg ? "below_avg" : "above_avg";
+}
+function Ot(e, t, n) {
+	let r = Dt(t, n, !!e?.detailed_colors);
+	if (!e?.detailed_colors) return r === "below_avg" ? we : Te;
+	let i = xt(e.color_cheap, "#CDDC39"), a = xt(e.color_normal, "#FF9800"), o = xt(e.color_expensive, "#F44336"), s = xt(e.color_very_expensive, "#B71C1C");
+	return r === "cheap" ? i : r === "normal" ? a : r === "expensive" ? o : s;
+}
+function kt(e, t, n) {
+	let r = Dt(e, t);
+	return r ? q(`region_${r}`, n) : "";
+}
+function At(e, t) {
+	if (!t) return [];
+	if (!t.detailed) return [t.avg].filter((e) => Number.isFinite(e));
+	let n = [
+		t.p20,
+		t.avg,
+		t.p70
+	];
+	return t.fixed !== null && t.fixed !== void 0 && n.push(t.fixed), n.filter((e) => Number.isFinite(e));
+}
+function jt(e) {
+	return (Pe.find(([t]) => e <= t) ?? [null, 20])[1];
+}
+function Mt(e, t) {
+	if (!e.length) return {
+		yMin: 0,
+		yMax: 10,
+		ticks: [
+			0,
+			2,
+			4,
+			6,
+			8,
+			10
+		]
+	};
+	let n = Infinity, r = -Infinity;
+	for (let t of e) n = Math.min(n, t.price), r = Math.max(r, t.price);
+	let i = r - n;
+	i <= 0 && (i = t === "currency" ? .04 : 4);
+	let a = jt(i), o = Q(i * .08, a * .5, a * 1), s = n - o, c = r + o;
+	c <= s && (c = s + a * 4), s = Math.floor(s / a) * a, c = Math.ceil(c / a) * a;
+	let l = [];
+	for (let e = s; e <= c + 1e-9; e += a) l.push(e);
+	return {
+		yMin: s,
+		yMax: c,
+		ticks: l
+	};
+}
+function Nt(e, t, n, r, i, a = 24, o = null) {
+	let { left: s, top: c, innerW: l, innerH: u, yMin: d, yMax: f } = n, p = i || at(/* @__PURE__ */ new Date()), m = new Date(p.getTime() + a * 3600 * 1e3), h = Pt(p, a, s, l), g = Ft(c, u, d, f), _ = [...t].sort((e, t) => e.start - t.start), v = [];
+	for (let t = 0; t < _.length; t++) {
+		let n = _[t], i = _[t + 1] || {
+			start: m,
+			price: n.price
+		}, a = h(n.start), s = h(i.start), c = g(n.price), l = o ? o(n.price) : Ot(e, n.price, r);
+		if (v.push({
+			x1: a,
+			y1: c,
+			x2: s,
+			y2: c,
+			stroke: l,
+			width: 2
+		}), t < _.length - 1) {
+			let t = g(i.price), a = n.price, u = i.price;
+			if (a === u) v.push({
+				x1: s,
+				y1: c,
+				x2: s,
+				y2: t,
+				stroke: l,
+				width: 2
+			});
+			else {
+				let t = Math.min(a, u), n = Math.max(a, u), i = At(e, r).filter((e) => e > t && e < n).sort((e, t) => e - t), c = a < u ? [
+					a,
+					...i,
+					u
+				] : [
+					a,
+					...i.reverse(),
+					u
+				];
+				for (let t = 0; t < c.length - 1; t++) {
+					let n = c[t], i = c[t + 1], a = (n + i) / 2, l = o ? o(a) : Ot(e, a, r);
+					v.push({
+						x1: s,
+						y1: g(n),
+						x2: s,
+						y2: g(i),
+						stroke: l,
+						width: 2
+					});
+				}
+			}
+		}
+	}
+	return v;
+}
+function Pt(e, t, n, r) {
+	let i = new Date(e.getTime() + t * 3600 * 1e3);
+	return (t) => n + (Q(t.getTime(), e.getTime(), i.getTime()) - e.getTime()) / (i.getTime() - e.getTime()) * r;
+}
+function Ft(e, t, n, r) {
+	return (i) => e + (1 - Q((i - n) / (r - n || 1), 0, 1)) * t;
+}
+function It(e, t, n) {
+	for (let r of n) {
+		let n = document.createElementNS(t, "line");
+		n.setAttribute("stroke-linecap", r.cap || "square"), n.setAttribute("stroke-linejoin", r.join || "miter"), n.setAttribute("x1", r.x1), n.setAttribute("y1", r.y1), n.setAttribute("x2", r.x2), n.setAttribute("y2", r.y2), n.setAttribute("stroke", r.stroke), n.setAttribute("stroke-width", r.width), e.appendChild(n);
+	}
+}
+//#endregion
 //#region src/units.ts
-function yt(e, t) {
+function Lt(e, t) {
 	let n = String(e || "").trim();
 	return n ? t === "value_only" ? n.replace(/\/\s*kwh$/i, "").trim() : n : "";
 }
-function bt(e) {
+function Rt(e) {
 	return String(e || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function xt(e) {
+function zt(e) {
 	let t = String(e || "").trim().toUpperCase();
 	if (!/^[A-Z]{3}$/.test(t)) return [];
 	let n = /* @__PURE__ */ new Set();
@@ -1230,29 +1419,29 @@ function xt(e) {
 	} catch {}
 	return [...n];
 }
-function St(e, t) {
+function Bt(e, t) {
 	let n = [
 		String(e?.attributes?.unit_of_measurement || "").trim(),
 		t,
 		String(e?.attributes?.currency || "").trim()
 	].filter(Boolean), r = new Set(n);
-	for (let e of n) for (let t of xt(e)) r.add(t);
+	for (let e of n) for (let t of zt(e)) r.add(t);
 	return [...r].sort((e, t) => t.length - e.length);
 }
-function Ct(e, t) {
+function Vt(e, t) {
 	let n = String(e ?? "").replace(/\u00A0/g, " ").trim();
 	for (let e of t) {
 		if (!e) continue;
-		let t = bt(e);
+		let t = Rt(e);
 		n = n.replace(RegExp(`^\\s*${t}\\s*`, "i"), "").trim(), n = n.replace(RegExp(`\\s*${t}\\s*$`, "i"), "").trim();
 	}
 	return n;
 }
-function wt(e, t) {
+function Ht(e, t) {
 	let n = String(e ?? "").replace(/\u00A0/g, " ").trim();
 	for (let e of t) {
 		if (!e) continue;
-		let t = bt(e), r = n.match(RegExp(`^(.*?)\\s*(${t})\\s*$`, "i"));
+		let t = Rt(e), r = n.match(RegExp(`^(.*?)\\s*(${t})\\s*$`, "i"));
 		if (r?.[1]?.trim()) return {
 			value: r[1].trim(),
 			unit: r[2].trim()
@@ -1268,7 +1457,7 @@ function wt(e, t) {
 		unit: ""
 	};
 }
-function Tt(e) {
+function Ut(e) {
 	let t = String(e || "").replace(/\s+/g, "");
 	if (!t) return "";
 	let n = t.match(/^([A-Z]{3})\/kWh$/i);
@@ -1287,23 +1476,23 @@ function Tt(e) {
 	].find(([e]) => r === e);
 	return i ? i[1] : "";
 }
-function Et(e) {
+function Wt(e) {
 	let t = e?.currency && String(e.currency).trim() || "";
-	return t ? t.toUpperCase() : Tt(e?.unit_of_measurement);
+	return t ? t.toUpperCase() : Ut(e?.unit_of_measurement);
 }
-function Dt(e) {
+function Gt(e) {
 	return Oe.has(e);
 }
-function Ot(e, t) {
-	return e.currency_override && e.currency_override !== "auto" ? e.currency_override === "custom" ? String(e.currency_custom || "").trim().toUpperCase() : String(e.currency_override).trim().toUpperCase() : Et(t);
+function Kt(e, t) {
+	return e.currency_override && e.currency_override !== "auto" ? e.currency_override === "custom" ? String(e.currency_custom || "").trim().toUpperCase() : String(e.currency_override).trim().toUpperCase() : Wt(t);
 }
-function kt(e, t) {
+function qt(e, t) {
 	if (e.unit_format !== "minor") return 1;
-	if (t && Dt(t)) return 100;
+	if (t && Gt(t)) return 100;
 	let n = X(e.unit_factor);
 	return n && n > 0 ? n : 100;
 }
-function At(e, t) {
+function Jt(e, t) {
 	return !e.length || t === 1 ? {
 		points: e,
 		scaled: !1,
@@ -1317,36 +1506,36 @@ function At(e, t) {
 		factor: t
 	};
 }
-function jt(e, t, n) {
+function Yt(e, t, n) {
 	if (e.currency_override === "custom") return e.minor_label || q("unit_minor", n);
-	if (t && Dt(t)) {
+	if (t && Gt(t)) {
 		let e = q(`minor_${t}`, n);
 		return e && !e.startsWith("minor_") ? e : "";
 	}
 	return "";
 }
-function Mt(e, t, n) {
-	let r = Ot(e, t);
+function Xt(e, t, n) {
+	let r = Kt(e, t);
 	if (e.unit_format === "minor") {
-		let t = jt(e, r, n);
+		let t = Yt(e, r, n);
 		return t ? `${t}/kWh` : "minor/kWh";
 	}
 	return r ? `${r}/kWh` : "";
 }
 //#endregion
 //#region src/pricing.ts
-function Nt(e, t, n) {
+function Zt(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-function Pt(e, t) {
-	let n = Ve(e);
-	return n === "selected" ? Kt(t) : n;
+function Qt(e, t) {
+	let n = Ue(e);
+	return n === "selected" ? fn(t) : n;
 }
-function Ft(e, t, n = "today") {
-	let r = Pt(e, n);
+function $t(e, t, n = "today") {
+	let r = Qt(e, n);
 	return q(r === "tomorrow" ? "label_tomorrow" : r === "two_days" ? "label_two_days" : "label_today", t);
 }
-function It(e) {
+function en(e) {
 	if (!Array.isArray(e) || e.length < 2) return null;
 	let t = null;
 	for (let n = 1; n < e.length; n++) {
@@ -1357,17 +1546,17 @@ function It(e) {
 	}
 	return t === 15 || t === 60 ? t : null;
 }
-function Lt(e, t) {
+function tn(e, t) {
 	let n = e[t];
 	if (!n) return 9e5;
 	let r = t > 0 ? n.start.getTime() - e[t - 1].start.getTime() : null, i = e[t + 1] ? e[t + 1].start.getTime() - n.start.getTime() : null;
 	return r > 0 && i > 0 ? i > r * 1.5 ? r : i : i > 0 ? i : r > 0 ? r : 9e5;
 }
-function Rt(e, t = 1, n = "UTC", r = /* @__PURE__ */ new Date()) {
+function nn(e, t = 1, n = "UTC", r = /* @__PURE__ */ new Date()) {
 	if (!Array.isArray(e) || !e.length) return !1;
-	let i = It(e);
+	let i = en(e);
 	if (!i) return !1;
-	let a = lt(r, t, n), o = lt(r, t + 1, n), s = Math.round((o.getTime() - a.getTime()) / (i * 6e4));
+	let a = dt(r, t, n), o = dt(r, t + 1, n), s = Math.round((o.getTime() - a.getTime()) / (i * 6e4));
 	if (s <= 0 || e.length !== s) return !1;
 	for (let t = 0; t < e.length; t++) {
 		let n = a.getTime() + t * i * 6e4;
@@ -1375,48 +1564,48 @@ function Rt(e, t = 1, n = "UTC", r = /* @__PURE__ */ new Date()) {
 	}
 	return !0;
 }
-function zt(e) {
+function rn(e) {
 	return !!e && Object.prototype.hasOwnProperty.call(e, "tomorrow_status");
 }
-function Bt(e, t = null, n = "UTC") {
-	if (zt(e)) {
+function an(e, t = null, n = "UTC") {
+	if (rn(e)) {
 		let t = String(e?.tomorrow_status || "").toLowerCase();
 		return t === "ok" || t === "preview";
 	}
-	return Rt(Z(Array.isArray(t) ? t : vt(e), /* @__PURE__ */ new Date(), 1, n), 1, n);
+	return nn(Z(Array.isArray(t) ? t : bt(e), /* @__PURE__ */ new Date(), 1, n), 1, n);
 }
-function Vt(e, t, n = "UTC") {
-	let r = vt(e);
+function on(e, t, n = "UTC") {
+	let r = bt(e);
 	if (t === "today") return Z(r, /* @__PURE__ */ new Date(), 0, n);
 	if (t === "tomorrow") return Z(r, /* @__PURE__ */ new Date(), 1, n);
 	let i = Z(r, /* @__PURE__ */ new Date(), 0, n), a = Z(r, /* @__PURE__ */ new Date(), 1, n);
 	return [...i, ...a];
 }
-function Ht(e, t, n, r = "today", i = "range", a = "today", o = !0, s = "per_kwh", c = "UTC") {
-	let l = Pt(r, a);
-	if ((l === "tomorrow" || l === "two_days") && !Bt(t, null, c)) return q("price_range_unavailable", n);
-	let u = l === "today" ? "today" : l === "tomorrow" ? "tomorrow" : "today_tomorrow", d = kt(e, Ot(e, t)), f = yt(Mt(e, t, n), s), p = () => At(Vt(t, l, c), d).points;
+function sn(e, t, n, r = "today", i = "range", a = "today", o = !0, s = "per_kwh", c = "UTC") {
+	let l = Qt(r, a);
+	if ((l === "tomorrow" || l === "two_days") && !an(t, null, c)) return q("price_range_unavailable", n);
+	let u = l === "today" ? "today" : l === "tomorrow" ? "tomorrow" : "today_tomorrow", d = qt(e, Kt(e, t)), f = Lt(Xt(e, t, n), s), p = () => Jt(on(t, l, c), d).points;
 	if (i === "avg") {
-		let r = ht(t, `avg_${u}`);
+		let r = _t(t, `avg_${u}`);
 		if (r === null) {
-			if (r = gt(p().map((e) => e.price).filter((e) => Number.isFinite(e))), r === null) return q("price_range_unavailable", n);
+			if (r = vt(p().map((e) => e.price).filter((e) => Number.isFinite(e))), r === null) return q("price_range_unavailable", n);
 		} else r *= d;
-		return `${et(r, e.decimals)}${o && f ? ` ${f}` : ""}`;
+		return `${nt(r, e.decimals)}${o && f ? ` ${f}` : ""}`;
 	}
-	let m = ht(t, `min_${u}`), h = ht(t, `max_${u}`);
+	let m = _t(t, `min_${u}`), h = _t(t, `max_${u}`);
 	if (m !== null && (m *= d), h !== null && (h *= d), m === null || h === null) {
 		let e = p().map((e) => e.price).filter((e) => Number.isFinite(e));
 		if (!e.length) return q("price_range_unavailable", n);
 		m === null && (m = Math.min(...e)), h === null && (h = Math.max(...e));
 	}
-	return h < m && ([m, h] = [h, m]), `${et(m, e.decimals)} - ${et(h, e.decimals)}${o && f ? ` ${f}` : ""}`;
+	return h < m && ([m, h] = [h, m]), `${nt(m, e.decimals)} - ${nt(h, e.decimals)}${o && f ? ` ${f}` : ""}`;
 }
-function Ut(e, t, n, r, i) {
-	let a = i === "today_tomorrow" ? "_today_tomorrow" : i === "tomorrow" ? "_tomorrow" : "_today", o = ht(t, `p20${a}`), s = ht(t, `avg${a}`), c = ht(t, `p70${a}`);
+function cn(e, t, n, r, i) {
+	let a = i === "today_tomorrow" ? "_today_tomorrow" : i === "tomorrow" ? "_tomorrow" : "_today", o = _t(t, `p20${a}`), s = _t(t, `avg${a}`), c = _t(t, `p70${a}`);
 	if (r !== 1 && (o !== null && (o *= r), s !== null && (s *= r), c !== null && (c *= r)), o === null || s === null || c === null) {
 		let e = (n || []).map((e) => e.price).filter((e) => typeof e == "number" && Number.isFinite(e)).slice();
 		e.sort((e, t) => e - t);
-		let t = _t(e, .2), r = gt(e), i = _t(e, .7);
+		let t = yt(e, .2), r = vt(e), i = yt(e, .7);
 		o === null && (o = t), s === null && (s = r), c === null && (c = i);
 	}
 	if (o === null && s === null && c === null) return {
@@ -1424,45 +1613,65 @@ function Ut(e, t, n, r, i) {
 		avg: 0,
 		p70: 0
 	};
-	let l = Gt(e, "use_fixed_p20", "fixed_p20_value", r), u = Gt(e, "use_fixed_avg", "fixed_avg_value", r), d = Gt(e, "use_fixed_expensive", "fixed_expensive_value", r);
+	let l = dn(e, "use_fixed_p20", "fixed_p20_value", r), u = dn(e, "use_fixed_avg", "fixed_avg_value", r), d = dn(e, "use_fixed_expensive", "fixed_expensive_value", r);
 	l !== null && (o = l), u !== null && (s = u), d !== null && (c = d);
 	let f = Math.min(o ?? s ?? c, s ?? o ?? c, c ?? s ?? o), p = Math.max(o ?? s ?? c, s ?? o ?? c, c ?? s ?? o);
 	return {
 		p20: f,
-		avg: Nt(s ?? f, f, p),
+		avg: Zt(s ?? f, f, p),
 		p70: p,
 		fixed: null,
 		detailed: !!e.detailed_colors
 	};
 }
-function Wt(e, t, n) {
-	return At(n, kt(e, Ot(e, t)));
+function ln(e, t, n, r, i, a = "UTC", o = /* @__PURE__ */ new Date()) {
+	let s = !!e?.detailed_colors, c = Et(r, s), l = qt(e, Kt(e, t));
+	for (let r of [0, 1]) {
+		let u = r === 0 ? "today" : "tomorrow", d = Jt(Z(n, o, r, a), l).points;
+		if (!d.length) continue;
+		let f = cn(e, t, d, l, u);
+		for (let e = 0; e < d.length; e++) {
+			let t = d[e];
+			if (Dt(t.price, f, s) !== c) continue;
+			let n = t.start.getTime();
+			if (n > o.getTime()) {
+				let e = mt(t.start, a);
+				return r === 0 ? e : q("next_price_level_tomorrow", i, { time: e });
+			}
+			let l = n + tn(d, e);
+			if (o.getTime() >= n && o.getTime() < l) return q("label_now", i);
+		}
+	}
+	return "—";
 }
-function Gt(e, t, n, r) {
+function un(e, t, n) {
+	return Jt(n, qt(e, Kt(e, t)));
+}
+function dn(e, t, n, r) {
 	if (!e?.detailed_colors || !e?.[t]) return null;
 	let i = X(e?.[n]);
 	return i === null ? null : i * (r || 1);
 }
-function Kt(e) {
+function fn(e) {
 	return e === "tomorrow" ? "tomorrow" : e === "two_days" ? "two_days" : "today";
 }
-function qt(e, t, n, r = "UTC") {
-	let i = t?.attributes || {}, a = vt(i), o = Kt(n), s = Ot(e, i), c = Bt(i, a, r), l = e.two_day_mode || "span", u = [], d = null, f = null, p = null, m = {
+function pn(e, t, n, r = "UTC") {
+	let i = t?.attributes || {}, a = bt(i), o = fn(n), s = Kt(e, i), c = an(i, a, r), l = e.two_day_mode || "span", u = [], d = null, f = null, p = null, m = {
 		factor: 1,
 		points: []
-	}, h = /* @__PURE__ */ new Date(), g = ut(h, r), _ = lt(h, 1, r), v = lt(h, 2, r), y = (e, t) => (t.getTime() - e.getTime()) / 36e5, b = y(g, _), x = g, S = b, C = 0;
-	if (o === "tomorrow") c && (m = Wt(e, i, Z(a, h, 1, r)), u = m.points, p = Ut(e, i, u, m.factor, "tomorrow"), C = u.length, x = _, S = y(_, v));
+	}, h = /* @__PURE__ */ new Date(), g = ft(h, r), _ = dt(h, 1, r), v = dt(h, 2, r), y = (e, t) => (t.getTime() - e.getTime()) / 36e5, b = y(g, _), x = g, S = b, C = 0;
+	if (o === "tomorrow") c && (m = un(e, i, Z(a, h, 1, r)), u = m.points, p = cn(e, i, u, m.factor, "tomorrow"), C = u.length, x = _, S = y(_, v));
 	else if (o === "two_days") {
 		if (c) {
 			let t = Z(a, h, 0, r), n = Z(a, h, 1, r);
-			m = Wt(e, i, t);
-			let o = m.factor, s = m.points, c = At(n, o).points;
-			c.length && (l === "span" ? (u = [...s, ...c], p = Ut(e, i, u, o, "today_tomorrow"), S = y(g, v), C = u.length) : (u = s, d = c, f = c.map((e) => ({
+			m = un(e, i, t);
+			let o = m.factor, s = m.points, c = Jt(n, o).points;
+			c.length && (l === "span" ? (u = [...s, ...c], p = cn(e, i, u, o, "today_tomorrow"), S = y(g, v), C = u.length) : (u = s, d = c, f = c.map((e) => ({
 				...e,
-				start: dt(e.start, g, r)
-			})), p = Ut(e, i, u, o, "today"), S = y(g, _), C = u.length)), x = g;
+				start: pt(e.start, g, r)
+			})), p = cn(e, i, u, o, "today"), S = y(g, _), C = u.length)), x = g;
 		}
-	} else m = Wt(e, i, Z(a, h, 0, r)), u = m.points, p = Ut(e, i, u, m.factor, "today"), C = u.length, x = g;
+	} else m = un(e, i, Z(a, h, 0, r)), u = m.points, p = cn(e, i, u, m.factor, "today"), C = u.length, x = g;
 	let w = (o === "tomorrow" || o === "two_days") && !c;
 	return w && !p && (p = {
 		p20: 0,
@@ -1488,16 +1697,16 @@ function qt(e, t, n, r = "UTC") {
 		showPending: w
 	};
 }
-function Jt(e, t, n, r = "UTC") {
-	let i = Wt(e, t, Z(n, /* @__PURE__ */ new Date(), 0, r)), a = i.points, o = a.length ? Ut(e, t, a, i.factor, "today") : null, s = null, c = "";
+function mn(e, t, n, r = "UTC") {
+	let i = un(e, t, Z(n, /* @__PURE__ */ new Date(), 0, r)), a = i.points, o = a.length ? cn(e, t, a, i.factor, "today") : null, s = null, c = "";
 	if (a.length) {
 		let e = /* @__PURE__ */ new Date(), t = -1;
 		for (let n = 0; n < a.length && a[n].start <= e; n++) t = n;
 		if (t >= 0) {
-			let n = a[t], i = Lt(a, t), o = a[t + 1], l = n.start.getTime() + i, u = o?.start ? Math.min(o.start.getTime(), l) : l;
+			let n = a[t], i = tn(a, t), o = a[t + 1], l = n.start.getTime() + i, u = o?.start ? Math.min(o.start.getTime(), l) : l;
 			if (e.getTime() < u) {
 				s = n;
-				let e = new Date(u), t = (e) => ft(e, r);
+				let e = new Date(u), t = (e) => mt(e, r);
 				c = `${t(s.start)}-${t(e)}`;
 			}
 		}
@@ -1510,195 +1719,33 @@ function Jt(e, t, n, r = "UTC") {
 }
 //#endregion
 //#region src/card-content.ts
-function Yt(e, t, n, r, i) {
+function hn(e, t, n, r, i) {
 	if (!e) return null;
 	if (e.source === "entity") {
 		let n = t?.states?.[e.entity];
 		if (!n) return null;
-		let r = t?.formatEntityState ? t.formatEntityState(n) : String(n.state ?? ""), i = String(r ?? "").replace(/\u00A0/g, " ").trim(), a = St(n, yt(n.attributes?.unit_of_measurement || "", e.unit_display_mode));
-		return e.show_unit ? wt(i, a) : {
-			value: Ct(i, a),
+		let r = t?.formatEntityState ? t.formatEntityState(n) : String(n.state ?? ""), i = String(r ?? "").replace(/\u00A0/g, " ").trim(), a = Bt(n, Lt(n.attributes?.unit_of_measurement || "", e.unit_display_mode));
+		return e.show_unit ? Ht(i, a) : {
+			value: Vt(i, a),
 			unit: ""
 		};
 	}
 	if (e.source === "attribute") {
 		if (!n) return null;
 		let a = n.attributes?.[e.attribute], o = X(a);
-		return o === null ? (a == null || typeof a == "string" && !a.trim()) && (a = null) : a = o * kt(i, Ot(i, n.attributes)), {
-			value: et(a, r),
-			unit: yt(Mt(i, n.attributes, J(t)), e.unit_display_mode)
+		return o === null ? (a == null || typeof a == "string" && !a.trim()) && (a = null) : a = o * qt(i, Kt(i, n.attributes)), {
+			value: nt(a, r),
+			unit: Lt(Xt(i, n.attributes, J(t)), e.unit_display_mode)
 		};
 	}
 	return null;
 }
 //#endregion
 //#region src/card-styles.ts
-var Xt = "\n        ha-card { overflow: hidden; }\n        .header { padding: 16px 16px 0 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 10px; }\n        .header-item { min-width: 0; font-size: 16px; font-weight: 600; color: var(--primary-text-color); }\n        .header-item-right { margin-left: auto; text-align: right; }\n        .header-metric { display: flex; flex-direction: column; line-height: 1.05; }\n        .header-metric-top { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); min-height: 13px; }\n        .header-metric-main { font-size: 18px; font-weight: 700; color: var(--primary-text-color); white-space: nowrap; }\n        .header-price-main { font-size: 30px; font-weight: 800; color: var(--primary-text-color); white-space: nowrap; }\n        .header-metric-unit { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); }\n        .info-grid {\n          display: grid;\n          grid-template-columns: repeat(var(--info-cols, var(--info-max-cols, 4)), minmax(100px, 1fr));\n          gap: var(--info-gap, 10px);\n          margin: 6px 0 0 0;\n        }\n        .info-grid.top { margin-bottom: -6px; }\n        .info-grid.bottom { margin-top: 14px; margin-bottom: 0; }\n        .info-item {\n          font-size: 12px;\n          color: var(--secondary-text-color);\n          display: grid;\n          grid-template-rows: minmax(0, 1fr) auto;\n          align-items: end;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          padding: 10px 10px;\n          aspect-ratio: 1 / 1;\n          min-height: 0;\n          box-sizing: border-box;\n        }\n        .info-item.has-action { cursor: pointer; }\n        .info-item.has-action:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n        }\n        .info-label {\n          font-size: 11px;\n          opacity: .82;\n          min-height: 12px;\n          width: 100%;\n          text-align: center;\n          overflow: hidden;\n          white-space: nowrap;\n          line-height: 1.1;\n        }\n        .info-label-text { display: inline-block; transform: translateX(0); will-change: transform; }\n        .info-label.marquee .info-label-text { animation: info-label-marquee var(--marquee-duration, 5s) ease-in-out infinite alternate; }\n        @keyframes info-label-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--marquee-shift, 0px))); } }\n        .info-value {\n          color: var(--primary-text-color);\n          font-weight: 700;\n          line-height: 1.08;\n          text-align: center;\n          width: 100%;\n          height: 100%;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          align-self: center;\n          justify-self: center;\n          gap: 0;\n          overflow: hidden;\n          white-space: nowrap;\n          text-overflow: ellipsis;\n        }\n        .info-value-inline { display: inline-flex; align-items: baseline; justify-content: center; max-width: 100%; overflow: hidden; }\n        .info-value-main { font-size: var(--info-main-size, 24px); font-weight: 800; line-height: 1; }\n        .info-value-unit { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); line-height: 1; }\n        .content { padding: 8px 16px 12px 16px; }\n        .pg-wrap { position: relative; padding-top: 0; margin-top: 0; touch-action: pan-y; cursor: pointer; }\n        .pg-wrap:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n          border-radius: 10px;\n        }\n        .content.no-info .pg-wrap { margin-top: -10px; }\n        .content.has-info .pg-wrap { margin-top: -6px; }\n        .pg-empty {\n          position: absolute;\n          inset: 0;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          pointer-events: none;\n        }\n        .pg-empty-card {\n          display: flex;\n          flex-direction: column;\n          align-items: center;\n          gap: 10px;\n          color: var(--secondary-text-color);\n          background: color-mix(in srgb, var(--card-background-color) 82%, var(--primary-color) 18%);\n          border: 1px solid rgba(120,120,120,0.28);\n          border-radius: 12px;\n          padding: 12px 14px;\n          max-width: min(88%, 420px);\n          max-height: calc(100% - 8px);\n          text-align: center;\n          overflow: hidden;\n        }\n        .pg-empty-text { font-size: 13px; line-height: 1.35; }\n        .pg-empty-gears {\n          width: 62px;\n          height: 44px;\n          overflow: visible;\n          color: var(--secondary-text-color);\n          opacity: 0.95;\n        }\n        .pg-empty-gear-lg { transform-origin: 20px 24px; animation: pg-spin-cw 9s linear infinite; }\n        .pg-empty-gear-sm-a { transform-origin: 39px 17px; animation: pg-spin-ccw 7s linear infinite; }\n        .pg-empty-gear-sm-b { transform-origin: 47px 31px; animation: pg-spin-ccw 11s linear infinite; }\n        .pg-empty-gear-lg, .pg-empty-gear-sm-a, .pg-empty-gear-sm-b { transform-box: fill-box; transform-origin: center; }\n        .pg-empty.is-timeline .pg-empty-card { padding: 0px 10px; border-radius: 10px; gap: 0px; max-width: min(86%, 360px); }\n        .pg-empty.is-timeline .pg-empty-text { font-size: 12px; line-height: 1.2; }\n        .pg-empty.is-timeline .pg-empty-gears { width: 40px; height: 24px; }\n        @keyframes pg-spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }\n        @keyframes pg-spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }\n        .pg-legend { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 8px 0 6px 0; font-size: 13px; opacity: .9; }\n        .pg-legend.is-timeline { margin-top: -17px; }\n        .pg-legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }\n        .pg-legend-dot { width: 8px; height: 8px; border-radius: 999px; background: #999; }\n        .pg-buttons {\n          position: relative;\n          display: grid;\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n          margin-top: 6px;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          overflow: hidden;\n        }\n        .pg-buttons-indicator {\n          position: absolute;\n          left: 0;\n          bottom: 0;\n          width: 33.3333%;\n          height: 3px;\n          background: var(--primary-color);\n          transition: transform .22s cubic-bezier(.2,.7,.2,1);\n          pointer-events: none;\n        }\n        .pg-buttons.day-today .pg-buttons-indicator { transform: translateX(0%); }\n        .pg-buttons.day-tomorrow .pg-buttons-indicator { transform: translateX(100%); }\n        .pg-buttons.day-two_days .pg-buttons-indicator { transform: translateX(200%); }\n        .pg-btn {\n          position: relative;\n          padding: 11px 8px;\n          border-radius: 0;\n          border: 0;\n          background: transparent;\n          color: var(--primary-text-color);\n          font-size: 13px;\n          font-weight: 600;\n          opacity: .8;\n          cursor: pointer;\n          overflow: visible;\n          -webkit-tap-highlight-color: transparent;\n          transition: color .18s ease, opacity .18s ease;\n        }\n        .pg-btn.active {\n          color: var(--primary-color);\n          opacity: 1;\n        }\n        .pg-btn-state {\n          position: absolute;\n          width: 12px;\n          height: 12px;\n          border-radius: 999px;\n          background: color-mix(in srgb, var(--primary-color) 22%, transparent);\n          transform: translate(-50%, -50%) scale(0);\n          opacity: 0;\n          pointer-events: none;\n        }\n        .pg-btn-state.run { animation: pg-btn-state .36s cubic-bezier(.2,.7,.2,1); }\n        @keyframes pg-btn-state {\n          0% { opacity: .95; transform: translate(-50%, -50%) scale(0); }\n          70% { opacity: .38; transform: translate(-50%, -50%) scale(14); }\n          100% { opacity: 0; transform: translate(-50%, -50%) scale(18); }\n        }\n        .pg-tooltip {\n          position:absolute; pointer-events:none;\n          background: var(--card-background-color);\n          border: 1px solid rgba(120,120,120,.35);\n          box-shadow: 0 2px 10px rgba(0,0,0,.18);\n          border-radius: 10px;\n          padding: 6px 8px;\n          font-size: 12px;\n          color: var(--primary-text-color);\n          transform: translate(-50%, -100%);\n          display:none;\n          white-space: nowrap;\n          z-index: 2;\n        }\n        .pg-sub { opacity:.75; font-size:11px; }\n        svg.svg { width: 100%; height: 100%; display:block; }\n        .tl-root { position: relative; display: flex; flex-direction: column; gap: 9px; height: 100%; justify-content: center; }\n        .tl-track { position: relative; display: flex; height: 6px; align-items: stretch; }\n        .tl-slot { flex: 1 1 0; min-width: 0; }\n        .tl-past {\n          position: absolute;\n          left: 0;\n          top: 0;\n          bottom: 0;\n          background: rgba(0, 0, 0, 0.22);\n          pointer-events: none;\n        }\n        .tl-now {\n          position: absolute;\n          top: 50%;\n          width: 3px;\n          height: 14px;\n          border-radius: 10px;\n          transform: translateY(-50%);\n          pointer-events: none;\n          box-shadow: 0 0 4px rgba(0,0,0,0.3);\n          box-sizing: border-box;\n        }\n        .tl-scale { display: grid; gap: 0; }\n        .tl-tick { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }\n        .tl-dot { width: 3px; height: 3px; border-radius: 999px; background: rgba(120,120,120,0.55); margin-bottom: 3px; }\n        .tl-dot.major { width: 4px; height: 4px; background: rgba(20,20,20,0.9); }\n        .tl-hour { font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n        .tl-days { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; pointer-events: none; }\n        .tl-day { text-align: center; font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n      ";
-//#endregion
-//#region src/graph.ts
-function Q(e, t, n) {
-	return Math.max(t, Math.min(n, e));
-}
-function Zt(e, t = "#ffffff") {
-	if (typeof e == "string" && e.trim()) return e.trim();
-	if (Array.isArray(e) && e.length >= 3) {
-		let t = X(e[0]), n = X(e[1]), r = X(e[2]);
-		if (t !== null && n !== null && r !== null) return `rgb(${Q(Math.round(t), 0, 255)}, ${Q(Math.round(n), 0, 255)}, ${Q(Math.round(r), 0, 255)})`;
-	}
-	if (e && typeof e == "object") {
-		let t = X(e.r ?? e.red), n = X(e.g ?? e.green), r = X(e.b ?? e.blue);
-		if (t !== null && n !== null && r !== null) return `rgb(${Q(Math.round(t), 0, 255)}, ${Q(Math.round(n), 0, 255)}, ${Q(Math.round(r), 0, 255)})`;
-	}
-	return t;
-}
-function Qt(e, t = "#ffffff") {
-	if (!e) return t;
-	let n = String(e).trim();
-	if (n.startsWith("#") || (n = `#${n}`), /^#([0-9a-f]{3})$/i.test(n)) {
-		let e = n.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
-		if (e) return `#${e[1]}${e[1]}${e[2]}${e[2]}${e[3]}${e[3]}`.toLowerCase();
-	}
-	return /^#([0-9a-f]{6})$/i.test(n) ? n.toLowerCase() : t;
-}
-function $t(e) {
-	if (typeof e != "string") return null;
-	let t = e.trim().match(/^rgba?\(([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
-	return t ? [
-		Q(Number(t[1]), 0, 255),
-		Q(Number(t[2]), 0, 255),
-		Q(Number(t[3]), 0, 255)
-	] : null;
-}
-function en(e, t) {
-	if (!e || !t) return "";
-	let n = document.createElement("span");
-	n.style.display = "none", n.style.color = t, e.appendChild(n);
-	let r = getComputedStyle(n).color || "";
-	return n.remove(), r;
-}
-function tn(e) {
-	if (!e) return "rgba(38, 14, 25, 0.6)";
-	let t = getComputedStyle(e), n = t.getPropertyValue("--card-background-color")?.trim() || "";
-	n ||= t.backgroundColor || "", (!n || n === "transparent" || n === "rgba(0, 0, 0, 0)") && (n = getComputedStyle(document.documentElement).getPropertyValue("--card-background-color")?.trim() || "");
-	let r = $t(en(e, n || "#ffffff"));
-	if (!r) return "rgba(38, 14, 25, 0.6)";
-	let [i, a, o] = r.map((e) => e / 255);
-	return .2126 * i + .7152 * a + .0722 * o < .5 ? "rgba(38, 14, 25, 0.6)" : "rgba(235, 238, 241, 0.7)";
-}
-function nn(e, t, n) {
-	if (!e?.detailed_colors) return t <= (n?.avg ?? 0) ? we : Te;
-	let r = Zt(e.color_cheap, "#CDDC39"), i = Zt(e.color_normal, "#FF9800"), a = Zt(e.color_expensive, "#F44336"), o = Zt(e.color_very_expensive, "#B71C1C");
-	return n?.fixed !== null && n?.fixed !== void 0 && t >= n.fixed ? o : t <= n.p20 ? r : t <= n.avg ? i : t <= n.p70 ? a : o;
-}
-function rn(e, t, n) {
-	return !t || !Number.isFinite(t.avg) ? "" : t.detailed ? t?.fixed !== null && t?.fixed !== void 0 && e >= t.fixed ? q("region_very_expensive", n) : e <= t.p20 ? q("region_cheap", n) : e <= t.avg ? q("region_normal", n) : e <= t.p70 ? q("region_expensive", n) : q("region_very_expensive", n) : e <= t.avg ? q("region_below_avg", n) : q("region_above_avg", n);
-}
-function an(e, t) {
-	if (!t) return [];
-	if (!t.detailed) return [t.avg].filter((e) => Number.isFinite(e));
-	let n = [
-		t.p20,
-		t.avg,
-		t.p70
-	];
-	return t.fixed !== null && t.fixed !== void 0 && n.push(t.fixed), n.filter((e) => Number.isFinite(e));
-}
-function on(e) {
-	return (Me.find(([t]) => e <= t) ?? [null, 20])[1];
-}
-function sn(e, t) {
-	if (!e.length) return {
-		yMin: 0,
-		yMax: 10,
-		ticks: [
-			0,
-			2,
-			4,
-			6,
-			8,
-			10
-		]
-	};
-	let n = Infinity, r = -Infinity;
-	for (let t of e) n = Math.min(n, t.price), r = Math.max(r, t.price);
-	let i = r - n;
-	i <= 0 && (i = t === "currency" ? .04 : 4);
-	let a = on(i), o = Q(i * .08, a * .5, a * 1), s = n - o, c = r + o;
-	c <= s && (c = s + a * 4), s = Math.floor(s / a) * a, c = Math.ceil(c / a) * a;
-	let l = [];
-	for (let e = s; e <= c + 1e-9; e += a) l.push(e);
-	return {
-		yMin: s,
-		yMax: c,
-		ticks: l
-	};
-}
-function cn(e, t, n, r, i, a = 24, o = null) {
-	let { left: s, top: c, innerW: l, innerH: u, yMin: d, yMax: f } = n, p = i || rt(/* @__PURE__ */ new Date()), m = new Date(p.getTime() + a * 3600 * 1e3), h = ln(p, a, s, l), g = un(c, u, d, f), _ = [...t].sort((e, t) => e.start - t.start), v = [];
-	for (let t = 0; t < _.length; t++) {
-		let n = _[t], i = _[t + 1] || {
-			start: m,
-			price: n.price
-		}, a = h(n.start), s = h(i.start), c = g(n.price), l = o ? o(n.price) : nn(e, n.price, r);
-		if (v.push({
-			x1: a,
-			y1: c,
-			x2: s,
-			y2: c,
-			stroke: l,
-			width: 2
-		}), t < _.length - 1) {
-			let t = g(i.price), a = n.price, u = i.price;
-			if (a === u) v.push({
-				x1: s,
-				y1: c,
-				x2: s,
-				y2: t,
-				stroke: l,
-				width: 2
-			});
-			else {
-				let t = Math.min(a, u), n = Math.max(a, u), i = an(e, r).filter((e) => e > t && e < n).sort((e, t) => e - t), c = a < u ? [
-					a,
-					...i,
-					u
-				] : [
-					a,
-					...i.reverse(),
-					u
-				];
-				for (let t = 0; t < c.length - 1; t++) {
-					let n = c[t], i = c[t + 1], a = (n + i) / 2, l = o ? o(a) : nn(e, a, r);
-					v.push({
-						x1: s,
-						y1: g(n),
-						x2: s,
-						y2: g(i),
-						stroke: l,
-						width: 2
-					});
-				}
-			}
-		}
-	}
-	return v;
-}
-function ln(e, t, n, r) {
-	let i = new Date(e.getTime() + t * 3600 * 1e3);
-	return (t) => n + (Q(t.getTime(), e.getTime(), i.getTime()) - e.getTime()) / (i.getTime() - e.getTime()) * r;
-}
-function un(e, t, n, r) {
-	return (i) => e + (1 - Q((i - n) / (r - n || 1), 0, 1)) * t;
-}
-function dn(e, t, n) {
-	for (let r of n) {
-		let n = document.createElementNS(t, "line");
-		n.setAttribute("stroke-linecap", r.cap || "square"), n.setAttribute("stroke-linejoin", r.join || "miter"), n.setAttribute("x1", r.x1), n.setAttribute("y1", r.y1), n.setAttribute("x2", r.x2), n.setAttribute("y2", r.y2), n.setAttribute("stroke", r.stroke), n.setAttribute("stroke-width", r.width), e.appendChild(n);
-	}
-}
+var gn = "\n        ha-card { overflow: hidden; }\n        .header { padding: 16px 16px 0 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 10px; }\n        .header-item { min-width: 0; font-size: 16px; font-weight: 600; color: var(--primary-text-color); }\n        .header-item-right { margin-left: auto; text-align: right; }\n        .header-metric { display: flex; flex-direction: column; line-height: 1.05; }\n        .header-metric-top { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); min-height: 13px; }\n        .header-metric-main { font-size: 18px; font-weight: 700; color: var(--primary-text-color); white-space: nowrap; }\n        .header-price-main { font-size: 30px; font-weight: 800; color: var(--primary-text-color); white-space: nowrap; }\n        .header-metric-unit { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); }\n        .info-grid {\n          display: grid;\n          grid-template-columns: repeat(var(--info-cols, var(--info-max-cols, 4)), minmax(100px, 1fr));\n          gap: var(--info-gap, 10px);\n          margin: 6px 0 0 0;\n        }\n        .info-grid.top { margin-bottom: -6px; }\n        .info-grid.bottom { margin-top: 14px; margin-bottom: 0; }\n        .info-item {\n          font-size: 12px;\n          color: var(--secondary-text-color);\n          display: grid;\n          grid-template-rows: minmax(0, 1fr) auto;\n          align-items: end;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          padding: 10px 10px;\n          aspect-ratio: 1 / 1;\n          min-height: 0;\n          box-sizing: border-box;\n        }\n        .info-item.has-action { cursor: pointer; }\n        .info-item.has-action:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n        }\n        .info-label {\n          font-size: 11px;\n          opacity: .82;\n          min-height: 12px;\n          width: 100%;\n          text-align: center;\n          overflow: hidden;\n          white-space: nowrap;\n          line-height: 1.1;\n        }\n        .info-label-text { display: inline-block; transform: translateX(0); will-change: transform; }\n        .info-label.marquee .info-label-text { animation: info-label-marquee var(--marquee-duration, 5s) ease-in-out infinite alternate; }\n        @keyframes info-label-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--marquee-shift, 0px))); } }\n        .info-value {\n          color: var(--primary-text-color);\n          font-weight: 700;\n          line-height: 1.08;\n          text-align: center;\n          width: 100%;\n          height: 100%;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          align-self: center;\n          justify-self: center;\n          gap: 0;\n          overflow: hidden;\n          white-space: nowrap;\n          text-overflow: ellipsis;\n        }\n        .info-value-inline { display: inline-flex; align-items: baseline; justify-content: center; max-width: 100%; overflow: hidden; }\n        .info-value-main { font-size: var(--info-main-size, 24px); font-weight: 800; line-height: 1; }\n        .info-value-unit { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); line-height: 1; }\n        .content { padding: 8px 16px 12px 16px; }\n        .pg-wrap { position: relative; padding-top: 0; margin-top: 0; touch-action: pan-y; cursor: pointer; }\n        .pg-wrap:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n          border-radius: 10px;\n        }\n        .content.no-info .pg-wrap { margin-top: -10px; }\n        .content.has-info .pg-wrap { margin-top: -6px; }\n        .pg-empty {\n          position: absolute;\n          inset: 0;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          pointer-events: none;\n        }\n        .pg-empty-card {\n          display: flex;\n          flex-direction: column;\n          align-items: center;\n          gap: 10px;\n          color: var(--secondary-text-color);\n          background: color-mix(in srgb, var(--card-background-color) 82%, var(--primary-color) 18%);\n          border: 1px solid rgba(120,120,120,0.28);\n          border-radius: 12px;\n          padding: 12px 14px;\n          max-width: min(88%, 420px);\n          max-height: calc(100% - 8px);\n          text-align: center;\n          overflow: hidden;\n        }\n        .pg-empty-text { font-size: 13px; line-height: 1.35; }\n        .pg-empty-gears {\n          width: 62px;\n          height: 44px;\n          overflow: visible;\n          color: var(--secondary-text-color);\n          opacity: 0.95;\n        }\n        .pg-empty-gear-lg { transform-origin: 20px 24px; animation: pg-spin-cw 9s linear infinite; }\n        .pg-empty-gear-sm-a { transform-origin: 39px 17px; animation: pg-spin-ccw 7s linear infinite; }\n        .pg-empty-gear-sm-b { transform-origin: 47px 31px; animation: pg-spin-ccw 11s linear infinite; }\n        .pg-empty-gear-lg, .pg-empty-gear-sm-a, .pg-empty-gear-sm-b { transform-box: fill-box; transform-origin: center; }\n        .pg-empty.is-timeline .pg-empty-card { padding: 0px 10px; border-radius: 10px; gap: 0px; max-width: min(86%, 360px); }\n        .pg-empty.is-timeline .pg-empty-text { font-size: 12px; line-height: 1.2; }\n        .pg-empty.is-timeline .pg-empty-gears { width: 40px; height: 24px; }\n        @keyframes pg-spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }\n        @keyframes pg-spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }\n        .pg-legend { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 8px 0 6px 0; font-size: 13px; opacity: .9; }\n        .pg-legend.is-timeline { margin-top: -17px; }\n        .pg-legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }\n        .pg-legend-dot { width: 8px; height: 8px; border-radius: 999px; background: #999; }\n        .pg-buttons {\n          position: relative;\n          display: grid;\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n          margin-top: 6px;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          overflow: hidden;\n        }\n        .pg-buttons-indicator {\n          position: absolute;\n          left: 0;\n          bottom: 0;\n          width: 33.3333%;\n          height: 3px;\n          background: var(--primary-color);\n          transition: transform .22s cubic-bezier(.2,.7,.2,1);\n          pointer-events: none;\n        }\n        .pg-buttons.day-today .pg-buttons-indicator { transform: translateX(0%); }\n        .pg-buttons.day-tomorrow .pg-buttons-indicator { transform: translateX(100%); }\n        .pg-buttons.day-two_days .pg-buttons-indicator { transform: translateX(200%); }\n        .pg-btn {\n          position: relative;\n          padding: 11px 8px;\n          border-radius: 0;\n          border: 0;\n          background: transparent;\n          color: var(--primary-text-color);\n          font-size: 13px;\n          font-weight: 600;\n          opacity: .8;\n          cursor: pointer;\n          overflow: visible;\n          -webkit-tap-highlight-color: transparent;\n          transition: color .18s ease, opacity .18s ease;\n        }\n        .pg-btn.active {\n          color: var(--primary-color);\n          opacity: 1;\n        }\n        .pg-btn-state {\n          position: absolute;\n          width: 12px;\n          height: 12px;\n          border-radius: 999px;\n          background: color-mix(in srgb, var(--primary-color) 22%, transparent);\n          transform: translate(-50%, -50%) scale(0);\n          opacity: 0;\n          pointer-events: none;\n        }\n        .pg-btn-state.run { animation: pg-btn-state .36s cubic-bezier(.2,.7,.2,1); }\n        @keyframes pg-btn-state {\n          0% { opacity: .95; transform: translate(-50%, -50%) scale(0); }\n          70% { opacity: .38; transform: translate(-50%, -50%) scale(14); }\n          100% { opacity: 0; transform: translate(-50%, -50%) scale(18); }\n        }\n        .pg-tooltip {\n          position:absolute; pointer-events:none;\n          background: var(--card-background-color);\n          border: 1px solid rgba(120,120,120,.35);\n          box-shadow: 0 2px 10px rgba(0,0,0,.18);\n          border-radius: 10px;\n          padding: 6px 8px;\n          font-size: 12px;\n          color: var(--primary-text-color);\n          transform: translate(-50%, -100%);\n          display:none;\n          white-space: nowrap;\n          z-index: 2;\n        }\n        .pg-sub { opacity:.75; font-size:11px; }\n        svg.svg { width: 100%; height: 100%; display:block; }\n        .tl-root { position: relative; display: flex; flex-direction: column; gap: 9px; height: 100%; justify-content: center; }\n        .tl-track { position: relative; display: flex; height: 6px; align-items: stretch; }\n        .tl-slot { flex: 1 1 0; min-width: 0; }\n        .tl-past {\n          position: absolute;\n          left: 0;\n          top: 0;\n          bottom: 0;\n          background: rgba(0, 0, 0, 0.22);\n          pointer-events: none;\n        }\n        .tl-now {\n          position: absolute;\n          top: 50%;\n          width: 3px;\n          height: 14px;\n          border-radius: 10px;\n          transform: translateY(-50%);\n          pointer-events: none;\n          box-shadow: 0 0 4px rgba(0,0,0,0.3);\n          box-sizing: border-box;\n        }\n        .tl-scale { display: grid; gap: 0; }\n        .tl-tick { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }\n        .tl-dot { width: 3px; height: 3px; border-radius: 999px; background: rgba(120,120,120,0.55); margin-bottom: 3px; }\n        .tl-dot.major { width: 4px; height: 4px; background: rgba(20,20,20,0.9); }\n        .tl-hour { font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n        .tl-days { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; pointer-events: none; }\n        .tl-day { text-align: center; font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n      ";
 //#endregion
 //#region src/runtime-config.ts
-function fn(e, t) {
+function _n(e, t) {
 	return e?.view_mode === "timeline" && t === "two_days" && e.two_day_mode !== "span" ? {
 		...e,
 		two_day_mode: "span"
@@ -1706,9 +1753,9 @@ function fn(e, t) {
 }
 //#endregion
 //#region src/card-render.ts
-function pn() {
+function vn() {
 	if (!this._config) return R``;
-	let e = this._config, t = this.hass, n = J(t), r = mt(t), i = G(e.title_item_left, "title", ""), a = G(e.title_item_right, "attribute", ""), o = i.label || "", s = W(e.content_items), c = e.view_mode === "timeline" ? 74 : Number(e.height) || 280;
+	let e = this._config, t = this.hass, n = J(t), r = gt(t), i = G(e.title_item_left, "title", ""), a = G(e.title_item_right, "attribute", ""), o = i.label || "", s = W(e.content_items), c = e.view_mode === "timeline" ? 74 : Number(e.height) || 280;
 	if (!t) return R`
         <ha-card>
           <div class="header">${o}</div>
@@ -1726,7 +1773,7 @@ function pn() {
           </div>
         </ha-card>
       `;
-	let u = fn(e, this._dayView), { timelineAll: d, dayView: f, currency: p, dayPoints: m, thresholds: h, scaled: g, debugPointsCount: _, showPending: v } = this._getDayCtx(u, l, r);
+	let u = _n(e, this._dayView), { timelineAll: d, dayView: f, currency: p, dayPoints: m, thresholds: h, scaled: g, debugPointsCount: _, showPending: v } = this._getDayCtx(u, l, r);
 	if (!m.length && !v) return R`
         <ha-card>
           <div class="header">${o}</div>
@@ -1742,7 +1789,7 @@ function pn() {
         <div><b>${q("debug", n)}</b> — ${q("points", n)}: ${_}, ${q("currency", n)}: ${p || "?"}, ${q("factor", n)}: ${g.factor}</div>
         <div>p20: ${Y(h.p20, 2)}, avg: ${Y(h.avg, 2)}, p70: ${Y(h.p70, 2)}</div>
       </div>
-    ` : R``, b = Jt(e, l.attributes, d, r), x = b.currentPoint, S = b.thresholds || h, C = b.currentWindow || "", w = (i, a = "header") => {
+    ` : R``, b = mn(e, l.attributes, d, r), x = b.currentPoint, S = b.thresholds || h, C = b.currentWindow || "", w = (i, a = "header") => {
 		if (!i) return null;
 		if (i.source === "title") {
 			if (a !== "header") return null;
@@ -1756,7 +1803,7 @@ function pn() {
 		}
 		if (i.source === "price_level") {
 			if (!x) return null;
-			let t = rn(x.price, S, n), r = i.use_color ? nn(e, x.price, S) : null;
+			let t = kt(x.price, S, n), r = i.use_color ? Ot(e, x.price, S) : null;
 			return a === "header" ? {
 				variant: "metric",
 				top: i.label || q("header_price_level_default", n),
@@ -1770,9 +1817,24 @@ function pn() {
 				item: i
 			};
 		}
+		if (i.source === "next_price_level") {
+			let t = ln(e, l.attributes, d, i.price_level, n, r), o = i.label || q("content_next_price_level_label", n);
+			return a === "header" ? {
+				variant: "metric",
+				top: o,
+				main: t,
+				color: null
+			} : {
+				variant: "info",
+				label: o,
+				value: t,
+				color: null,
+				item: i
+			};
+		}
 		if (i.source === "current_price") {
 			if (!x) return null;
-			let t = yt(Mt(e, l.attributes, n), i.unit_display_mode), r = et(x.price, e.decimals);
+			let t = Lt(Xt(e, l.attributes, n), i.unit_display_mode), r = nt(x.price, e.decimals);
 			return a === "header" ? {
 				variant: "price",
 				top: i.time_overwrite && i.label ? i.label : C,
@@ -1789,7 +1851,7 @@ function pn() {
 			};
 		}
 		if (i.source === "price_range" || i.source === "avg_price") {
-			let t = i.source === "price_range", o = i.label || `${q(t ? "content_price_range_label" : "content_avg_price_label", n)} ${Ft(i.range_day, n, f)}`, s = i.show_unit ? yt(Mt(e, l.attributes, n), i.unit_display_mode) : "", c = Ht(e, l.attributes, n, i.range_day, t ? "range" : "avg", f, !1, i.unit_display_mode, r);
+			let t = i.source === "price_range", o = i.label || `${q(t ? "content_price_range_label" : "content_avg_price_label", n)} ${$t(i.range_day, n, f)}`, s = i.show_unit ? Lt(Xt(e, l.attributes, n), i.unit_display_mode) : "", c = sn(e, l.attributes, n, i.range_day, t ? "range" : "avg", f, !1, i.unit_display_mode, r);
 			return a === "header" ? {
 				variant: "metric",
 				top: o,
@@ -1804,7 +1866,7 @@ function pn() {
 				item: i
 			};
 		}
-		let o = Yt(i, t, l, e.decimals, e);
+		let o = hn(i, t, l, e.decimals, e);
 		if (!o) return null;
 		let s = o.value === "—" || o.value === "";
 		if (a === "header" && !i.label && s || a !== "header" && !i.label && !i.attribute && !i.entity && s) return null;
@@ -1869,7 +1931,7 @@ function pn() {
         </div>
       `;
 	}, D = s.map((e) => w(e, "info")).filter((e) => !!e), O = e.content_items_position === "bottom" ? "bottom" : "top", k = O === "top" ? D : [], A = O === "bottom" ? D : [], j = k.length > 0, M = e.detailed_colors ? Ee.map(({ key: t, label: n, fallback: r }) => ({
-		color: Zt(e[t], r),
+		color: xt(e[t], r),
 		label: n
 	})) : [{
 		color: we,
@@ -1879,7 +1941,7 @@ function pn() {
 		label: "region_above_avg"
 	}];
 	return R`
-      <style>${Xt}</style>
+      <style>${gn}</style>
       <ha-card>
         <div class="header"
           role="button"
@@ -1916,17 +1978,17 @@ function pn() {
                   <svg class="pg-empty-gears" viewBox="0 0 64 44" aria-hidden="true">
                     <g class="pg-empty-gear-lg">
                       <g transform="translate(8 12) scale(0.92)">
-                        <path fill="currentColor" d="${Ne}"></path>
+                        <path fill="currentColor" d="${Fe}"></path>
                       </g>
                     </g>
                     <g class="pg-empty-gear-sm-a">
                       <g transform="translate(30 8) scale(0.56)">
-                        <path fill="currentColor" d="${Ne}"></path>
+                        <path fill="currentColor" d="${Fe}"></path>
                       </g>
                     </g>
                     <g class="pg-empty-gear-sm-b">
                       <g transform="translate(38 22) scale(0.48)">
-                        <path fill="currentColor" d="${Ne}"></path>
+                        <path fill="currentColor" d="${Fe}"></path>
                       </g>
                     </g>
                   </svg>
@@ -1981,12 +2043,12 @@ function pn() {
 function $(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-function mn(e, t) {
+function yn(e, t) {
 	return e?.get(t) ?? null;
 }
-function hn() {
+function bn() {
 	if (!this.hass || !this._config) return;
-	let e = this._config, t = J(this.hass), n = mt(this.hass), r = this.renderRoot?.querySelector(".pg-wrap"), i = this.renderRoot?.querySelector("#pg-svg-host"), a = this.renderRoot?.querySelector("#pg-tooltip"), o = this.renderRoot?.querySelector(".content"), s = this.renderRoot?.querySelectorAll(".info-grid") || [];
+	let e = this._config, t = J(this.hass), n = gt(this.hass), r = this.renderRoot?.querySelector(".pg-wrap"), i = this.renderRoot?.querySelector("#pg-svg-host"), a = this.renderRoot?.querySelector("#pg-tooltip"), o = this.renderRoot?.querySelector(".content"), s = this.renderRoot?.querySelectorAll(".info-grid") || [];
 	if (o && s.length) {
 		let e = Math.round(o.clientWidth || 0);
 		if (e > 0) {
@@ -2000,12 +2062,12 @@ function hn() {
 	this._syncResizeObserver(o, r, i);
 	let c = this.hass.states?.[this._config.entity];
 	if (!c) return;
-	let l = fn(e, this._dayView), u = this._getDayCtx(l, c, n), { dayView: d, twoDayMode: f, dayPoints: p, overlayPoints: m, overlayShifted: h, thresholds: g, dayStart: _, dayHours: v, firstDayHours: y, showPending: b } = u;
+	let l = _n(e, this._dayView), u = this._getDayCtx(l, c, n), { dayView: d, twoDayMode: f, dayPoints: p, overlayPoints: m, overlayShifted: h, thresholds: g, dayStart: _, dayHours: v, firstDayHours: y, showPending: b } = u;
 	if (!p.length || b) {
 		this._lastGraphSignature = null, this._unbindGraphPointer(), i.innerHTML = "", a.style.display = "none";
 		return;
 	}
-	let x = [...p].sort((e, t) => e.start - t.start), S = Mt(l, c.attributes, t), C = this._buildGraphSignature(l, c, u, i, r, t, n);
+	let x = [...p].sort((e, t) => e.start - t.start), S = Xt(l, c.attributes, t), C = this._buildGraphSignature(l, c, u, i, r, t, n);
 	if (C && C === this._lastGraphSignature) return;
 	if (this._lastGraphSignature = C, l.view_mode === "timeline") {
 		this._unbindGraphPointer(), a.style.display = "none";
@@ -2016,7 +2078,7 @@ function hn() {
 		let c = document.createElement("div");
 		c.className = "tl-scale", c.style.gridTemplateColumns = `repeat(${v + 1}, minmax(0, 1fr))`;
 		for (let e = 0; e < x.length; e++) {
-			let t = x[e], n = nn(l, t.price, g), r = x[e - 1], i = x[e + 1], a = r ? nn(l, r.price, g) : null, o = i ? nn(l, i.price, g) : null, c = document.createElement("div");
+			let t = x[e], n = Ot(l, t.price, g), r = x[e - 1], i = x[e + 1], a = r ? Ot(l, r.price, g) : null, o = i ? Ot(l, i.price, g) : null, c = document.createElement("div");
 			c.className = "tl-slot", c.style.background = n, a !== n && (c.style.borderTopLeftRadius = "999px", c.style.borderBottomLeftRadius = "999px"), o !== n && (c.style.borderTopRightRadius = "999px", c.style.borderBottomRightRadius = "999px"), s.appendChild(c);
 		}
 		let u = /* @__PURE__ */ new Date();
@@ -2030,8 +2092,8 @@ function hn() {
 				}
 			}
 			let n = $((u.getTime() - _.getTime()) / (e.getTime() - _.getTime()), 0, 1), i = document.createElement("div");
-			i.className = "tl-past", i.style.width = `${n * 100}%`, i.style.background = tn(r), s.appendChild(i);
-			let a = nn(l, t.price, g), o = document.createElement("div");
+			i.className = "tl-past", i.style.width = `${n * 100}%`, i.style.background = Tt(r), s.appendChild(i);
+			let a = Ot(l, t.price, g), o = document.createElement("div");
 			o.className = "tl-now", o.style.left = `calc(${n * 100}% - 3.5px)`, o.style.height = "14px", o.style.width = "7px", o.style.background = a, o.style.border = "2px solid var(--card-background-color)", s.appendChild(o);
 		}
 		for (let e = 0; e <= v; e += 1) {
@@ -2040,7 +2102,7 @@ function hn() {
 			let r = e % 6 == 0 || e === v, i = document.createElement("div");
 			if (i.className = `tl-dot ${r ? "major" : ""}`.trim(), t.appendChild(i), r) {
 				let r = document.createElement("div");
-				r.className = "tl-hour", r.textContent = ft(new Date(_.getTime() + e * 3600 * 1e3), n).slice(0, 2), t.appendChild(r);
+				r.className = "tl-hour", r.textContent = mt(new Date(_.getTime() + e * 3600 * 1e3), n).slice(0, 2), t.appendChild(r);
 			}
 			c.appendChild(t);
 		}
@@ -2055,7 +2117,7 @@ function hn() {
 		i.innerHTML = "", i.appendChild(o);
 		return;
 	}
-	let w = Math.round(i.clientWidth || r.clientWidth || this.clientWidth || 0), T = Math.max(320, w || 600), E = Number(e.height) || 280, D = T - 14, O = E - 26, k = D - 44, A = O - 18, { yMin: j, yMax: M, ticks: N } = sn(h ? [...p, ...h] : m ? [...p, ...m] : p, l.unit_format), P = {
+	let w = Math.round(i.clientWidth || r.clientWidth || this.clientWidth || 0), T = Math.max(320, w || 600), E = Number(e.height) || 280, D = T - 14, O = E - 26, k = D - 44, A = O - 18, { yMin: j, yMax: M, ticks: N } = Mt(h ? [...p, ...h] : m ? [...p, ...m] : p, l.unit_format), P = {
 		w: T,
 		h: E,
 		left: 44,
@@ -2068,16 +2130,16 @@ function hn() {
 		yMax: M
 	}, ee = N.map((e) => ({
 		y: 18 + (1 - $((e - j) / (M - j || 1), 0, 1)) * A,
-		label: tt(e)
+		label: rt(e)
 	})), te = [];
 	for (let e = 0; e <= v; e += 2) {
 		let t = 44 + e / v * k, r = new Date(_.getTime() + e * 3600 * 1e3);
 		te.push({
 			x: t,
-			label: ft(r, n).slice(0, 2)
+			label: mt(r, n).slice(0, 2)
 		});
 	}
-	let ne = cn(l, p, P, g, _, v), re = h ? cn(l, h, P, g, _, v, () => "rgb(120,120,120)") : [], ie = 44 + $(((/* @__PURE__ */ new Date()).getTime() - _.getTime()) / (v * 3600 * 1e3), 0, 1) * k, F = "http://www.w3.org/2000/svg", I = document.createElementNS(F, "svg");
+	let ne = Nt(l, p, P, g, _, v), re = h ? Nt(l, h, P, g, _, v, () => "rgb(120,120,120)") : [], ie = 44 + $(((/* @__PURE__ */ new Date()).getTime() - _.getTime()) / (v * 3600 * 1e3), 0, 1) * k, F = "http://www.w3.org/2000/svg", I = document.createElementNS(F, "svg");
 	I.setAttribute("class", "svg"), I.setAttribute("preserveAspectRatio", "xMinYMin meet"), I.setAttribute("viewBox", `0 0 ${T} ${E}`);
 	let L = document.createElementNS(F, "rect");
 	L.setAttribute("x", "0"), L.setAttribute("y", "0"), L.setAttribute("width", String(T)), L.setAttribute("height", String(E)), L.setAttribute("fill", "transparent"), L.setAttribute("pointer-events", "all"), I.appendChild(L);
@@ -2105,8 +2167,8 @@ function hn() {
 		let i = document.createElementNS(F, "text");
 		i.setAttribute("x", 44 + k * .75), i.setAttribute("y", 34), i.setAttribute("text-anchor", "middle"), i.setAttribute("font-size", "16"), i.setAttribute("fill", "rgba(120,120,120,0.8)"), i.textContent = q("label_tomorrow", t), I.appendChild(i);
 	}
-	dn(I, F, re), dn(I, F, ne), i.innerHTML = "", i.appendChild(I);
-	let ae = new Date(_.getTime() + v * 3600 * 1e3), oe = ln(_, v, 44, k), R = un(18, A, j, M), z = null;
+	It(I, F, re), It(I, F, ne), i.innerHTML = "", i.appendChild(I);
+	let ae = new Date(_.getTime() + v * 3600 * 1e3), oe = Pt(_, v, 44, k), R = Ft(18, A, j, M), z = null;
 	l.show_hover_line && (z = document.createElementNS(F, "line"), z.setAttribute("stroke-width", "1.2"), z.setAttribute("stroke-dasharray", "3 3"), z.setAttribute("stroke", "rgba(120,120,120,0.7)"), z.setAttribute("y1", 18), z.setAttribute("y2", O), z.style.display = "none", I.appendChild(z));
 	let B = document.createElementNS(F, "circle");
 	B.setAttribute("r", "4.5"), B.setAttribute("fill", "#ffffff"), B.setAttribute("stroke", "rgba(0,0,0,0.45)"), B.setAttribute("stroke-width", "1"), B.style.display = "none", I.appendChild(B);
@@ -2144,17 +2206,17 @@ function hn() {
 		let s = I.getBoundingClientRect(), c = 44 / T * s.width, u = D / T * s.width, p = $(($(e.clientX, o.left, o.right) - s.left - c) / (u - c), 0, 1), m = _.getTime() + p * v * 3600 * 1e3, y = ue(m);
 		if (y ||= this._lastBest, !y) return;
 		this._lastBest = y;
-		let b = ft(y.start, n), C = Y(y.price, l.decimals), w = x.indexOf(y), O = x[w + 1]?.start || ae, k = (oe(y.start) + oe(O)) / 2, A = R(y.price), j = null;
+		let b = mt(y.start, n), C = Y(y.price, l.decimals), w = x.indexOf(y), O = x[w + 1]?.start || ae, k = (oe(y.start) + oe(O)) / 2, A = R(y.price), j = null;
 		if (d === "two_days" && f === "overlay" && h && h.length && U) {
 			let e = Math.round((y.start.getTime() - _.getTime()) / 6e4), t = U.get(e);
 			t != null && (j = R(t));
 		}
 		if (se(k, A, j), d === "two_days" && f === "overlay" && h && h.length) {
-			let e = x.length > 1 ? Math.round((x[1].start.getTime() - x[0].start.getTime()) / 6e4) : 60, r = new Date(y.start.getTime() + e * 6e4), i = `${ft(y.start, n)}-${ft(r, n)}`, o = Math.round((y.start.getTime() - _.getTime()) / 6e4), s = mn(U, o), c = `${C} ${S}`, u = s === null ? "--" : `${Y(s, l.decimals)} ${S}`;
-			a.innerHTML = `<div><b>${nt(i)}</b></div><div class="pg-sub">${q("label_today", t)}: ${nt(c)}</div><div class="pg-sub">${q("label_tomorrow", t)}: ${nt(u)}</div>`;
+			let e = x.length > 1 ? Math.round((x[1].start.getTime() - x[0].start.getTime()) / 6e4) : 60, r = new Date(y.start.getTime() + e * 6e4), i = `${mt(y.start, n)}-${mt(r, n)}`, o = Math.round((y.start.getTime() - _.getTime()) / 6e4), s = yn(U, o), c = `${C} ${S}`, u = s === null ? "--" : `${Y(s, l.decimals)} ${S}`;
+			a.innerHTML = `<div><b>${it(i)}</b></div><div class="pg-sub">${q("label_today", t)}: ${it(c)}</div><div class="pg-sub">${q("label_tomorrow", t)}: ${it(u)}</div>`;
 		} else {
-			let e = rn(y.price, g, t);
-			a.innerHTML = `<div><b>${nt(b)}</b> — ${nt(C)} ${nt(S)}</div><div class="pg-sub">${q("label_region", t)}: ${nt(e)}</div>`;
+			let e = kt(y.price, g, t);
+			a.innerHTML = `<div><b>${it(b)}</b> — ${it(C)} ${it(S)}</div><div class="pg-sub">${q("label_region", t)}: ${it(e)}</div>`;
 		}
 		let M = 18 / E * s.height + (s.top - o.top), N = k / T * s.width;
 		a.style.display = "block", a.style.left = `${N}px`, a.style.top = `${M + 10}px`;
@@ -2173,11 +2235,11 @@ function hn() {
 }
 //#endregion
 //#region src/price-graph-card.ts
-var gn = () => window.customCardHelpers || null, _n = "2026.8.2";
-function vn(e, t, n) {
+var xn = () => window.customCardHelpers || null, Sn = "2026.8.3";
+function Cn(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-var yn = class extends be {
+var wn = class extends be {
 	static get properties() {
 		return {
 			hass: {},
@@ -2188,7 +2250,7 @@ var yn = class extends be {
 	set hass(e) {
 		this._hass = e, this._effectiveHassCache = null, this.isConnected && this._scheduleClockUpdate();
 		let t = J(e);
-		t !== this._loadedLang && (this._loadedLang = t, $e(t).then(() => this.requestUpdate())), this.requestUpdate();
+		t !== this._loadedLang && (this._loadedLang = t, tt(t).then(() => this.requestUpdate())), this.requestUpdate();
 	}
 	get hass() {
 		if (!this._hass || !this._contextStates || this._hass.states === this._contextStates) return this._hass;
@@ -2236,7 +2298,7 @@ var yn = class extends be {
 	}
 	setConfig(e) {
 		if (!e || typeof e != "object") throw Error("Invalid configuration");
-		this._config = Be(e);
+		this._config = He(e);
 		let t = this._config.day_view_default;
 		this._dayView = t === "tomorrow" || t === "two_days" ? t : "today", this._lastDayCtx = null, this._lastGraphSignature = null, this.isConnected && this._scheduleClockUpdate();
 	}
@@ -2258,13 +2320,13 @@ var yn = class extends be {
 		};
 	}
 	render() {
-		return pn.call(this);
+		return vn.call(this);
 	}
 	updated() {
-		return hn.call(this);
+		return bn.call(this);
 	}
 	_getDayCtx(e, t, n) {
-		let r = this._lastDayCtx, i = ut(/* @__PURE__ */ new Date(), n).getTime(), a = r && r.st === t && r.cfg === e && r.dayView === this._dayView && r.timeZone === n && r.dayKey === i ? r.value : qt(e, t, this._dayView, n);
+		let r = this._lastDayCtx, i = ft(/* @__PURE__ */ new Date(), n).getTime(), a = r && r.st === t && r.cfg === e && r.dayView === this._dayView && r.timeZone === n && r.dayKey === i ? r.value : pn(e, t, this._dayView, n);
 		return this._lastDayCtx = {
 			st: t,
 			cfg: e,
@@ -2277,7 +2339,7 @@ var yn = class extends be {
 	_scheduleClockUpdate() {
 		clearTimeout(this._clockTimer), this._clockTimer = setTimeout(() => {
 			this._lastGraphSignature = null, this.requestUpdate(), this._scheduleClockUpdate();
-		}, pt());
+		}, ht());
 	}
 	_buildGraphSignature(e, t, n, r, i, a, o) {
 		let s = t?.attributes || {}, c = Array.isArray(s.data) ? s.data : [], l = [
@@ -2325,7 +2387,7 @@ var yn = class extends be {
 		});
 	}
 	_setDayView(e) {
-		let t = Kt(e);
+		let t = fn(e);
 		this._dayView !== t && (this._dayView = t, this._lastDayCtx = null, this._lastGraphSignature = null, this.requestUpdate());
 	}
 	_syncResizeObserver(...e) {
@@ -2360,7 +2422,7 @@ var yn = class extends be {
 			let n = Math.ceil((t.scrollWidth || 0) - (e.clientWidth || 0));
 			if (n > 2) {
 				e.classList.add("marquee"), e.style.setProperty("--marquee-shift", `${n}px`);
-				let t = vn(4 + n / 22, 4, 12);
+				let t = Cn(4 + n / 22, 4, 12);
 				e.style.setProperty("--marquee-duration", `${t}s`);
 			} else e.classList.remove("marquee"), e.style.removeProperty("--marquee-shift"), e.style.removeProperty("--marquee-duration");
 		});
@@ -2410,7 +2472,7 @@ var yn = class extends be {
 		this._hasActionConfig(t) && this._dispatchAction(n, e);
 	}
 	_dispatchAction(e, t) {
-		let n = gn();
+		let n = xn();
 		if (n?.handleAction) {
 			n.handleAction(this, this.hass, e, t);
 			return;
@@ -2499,15 +2561,15 @@ var yn = class extends be {
 		n.style.left = `${i}px`, n.style.top = `${a}px`, n.classList.remove("run"), n.offsetWidth, n.classList.add("run");
 	}
 };
-customElements.get("price-graph-card") || customElements.define(Se, yn), window.customCards = window.customCards || [], window.customCards.push({
+customElements.get("price-graph-card") || customElements.define(Se, wn), window.customCards = window.customCards || [], window.customCards.push({
 	type: Se,
 	name: "Price Graph Card",
 	description: "Spot market electricity price step graph with auto thresholds.",
-	version: _n
+	version: Sn
 });
 //#endregion
 //#region src/editor-styles.ts
-var bn = o`
+var Tn = o`
       .wrap { padding: 8px 0; }
       .row { margin-top: 12px; }
       .row ha-form { width: 100%; }
@@ -2585,7 +2647,7 @@ var bn = o`
     `;
 //#endregion
 //#region src/editor-options.ts
-function xn(e) {
+function En(e) {
 	return [
 		{
 			value: "attribute",
@@ -2598,6 +2660,10 @@ function xn(e) {
 		{
 			value: "price_level",
 			label: q("editor_content_source_price", e)
+		},
+		{
+			value: "next_price_level",
+			label: q("editor_content_source_next_price_level", e)
 		},
 		{
 			value: "current_price",
@@ -2613,7 +2679,33 @@ function xn(e) {
 		}
 	];
 }
-function Sn(e) {
+function Dn(e, t) {
+	return e ? [
+		{
+			value: "cheap",
+			label: q("region_cheap", t)
+		},
+		{
+			value: "normal",
+			label: q("region_normal", t)
+		},
+		{
+			value: "expensive",
+			label: q("region_expensive", t)
+		},
+		{
+			value: "very_expensive",
+			label: q("region_very_expensive", t)
+		}
+	] : [{
+		value: "below_avg",
+		label: q("region_below_avg", t)
+	}, {
+		value: "above_avg",
+		label: q("region_above_avg", t)
+	}];
+}
+function On(e) {
 	return [
 		{
 			value: "selected",
@@ -2633,8 +2725,8 @@ function Sn(e) {
 		}
 	];
 }
-function Cn(e, t, n) {
-	let r = e.unit_format === "minor" ? jt(e, t, n) || q("unit_minor", n) : t || q("unit_currency", n);
+function kn(e, t, n) {
+	let r = e.unit_format === "minor" ? Yt(e, t, n) || q("unit_minor", n) : t || q("unit_currency", n);
 	return [{
 		value: "value_only",
 		label: r
@@ -2643,21 +2735,21 @@ function Cn(e, t, n) {
 		label: `${r}/kWh`
 	}];
 }
-function wn(e) {
+function An(e) {
 	return [{
 		value: "title",
 		label: q("editor_content_source_title", e)
-	}, ...xn(e)];
+	}, ...En(e)];
 }
-function Tn(e) {
+function jn(e) {
 	return e === "title_item_left" ? "title" : "attribute";
 }
 //#endregion
 //#region src/editor-sanitize.ts
-function En(e, t) {
+function Mn(e, t) {
 	let n = { ...e };
 	delete n.title;
-	let r = n.currency_override || "auto", i = r === "auto" ? t() : r === "custom" ? String(n.currency_custom || "").trim().toUpperCase() : r, a = i ? Dt(i) : !1, o = n.unit_format !== "currency";
+	let r = n.currency_override || "auto", i = r === "auto" ? t() : r === "custom" ? String(n.currency_custom || "").trim().toUpperCase() : r, a = i ? Gt(i) : !1, o = n.unit_format !== "currency";
 	if (r === "auto" && delete n.currency_override, r !== "custom" && delete n.currency_custom, o && !a || (delete n.unit_factor, delete n.minor_label), !n.detailed_colors) delete n.use_fixed_p20, delete n.fixed_p20_value, delete n.use_fixed_avg, delete n.fixed_avg_value, delete n.use_fixed_expensive, delete n.fixed_expensive_value;
 	else for (let [e, t] of [
 		["use_fixed_p20", "fixed_p20_value"],
@@ -2671,18 +2763,18 @@ function En(e, t) {
 		"double_tap"
 	]) n[`${e}_action_target`] !== "other" && (delete n[`${e}_action_target`], delete n[`${e}_action_entity`]);
 	for (let [e, t] of [["title_item_left", "title"], ["title_item_right", "attribute"]]) {
-		let r = Je(n[e], t);
+		let r = Xe(n[e], t);
 		r ? n[e] = r : delete n[e];
 	}
 	if (Array.isArray(n.content_items)) {
-		let e = n.content_items.map(Ye).filter(Boolean);
+		let e = n.content_items.map(Ze).filter(Boolean);
 		e.length ? n.content_items = e : delete n.content_items;
 	}
 	return n.content_items_position !== "bottom" && delete n.content_items_position, Number(n.content_items_max_cols) === 3 ? n.content_items_max_cols = 3 : delete n.content_items_max_cols, n;
 }
 //#endregion
 //#region src/editor-item-renderers.ts
-function Dn(e) {
+function Nn(e) {
 	return {
 		enabled: !!e?.enabled,
 		tap_action: e?.tap_action || { action: "more-info" },
@@ -2692,8 +2784,8 @@ function Dn(e) {
 		target_entity: e?.target_entity || ""
 	};
 }
-function On({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEntity: a }) {
-	let o = Dn(e.actions), s = (e) => i({ actions: {
+function Pn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEntity: a }) {
+	let o = Nn(e.actions), s = (e) => i({ actions: {
 		...o,
 		...e
 	} }), c = (e) => {
@@ -2773,8 +2865,9 @@ function On({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEnt
     </div>
   `;
 }
-function kn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
-	return e.source === "title" ? R`` : e.source === "price_level" ? R`
+function Fn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
+	if (e.source === "title") return R``;
+	if (e.source === "price_level") return R`
         <div class="two-col">
           <div class="toggle-item">
             <ha-switch
@@ -2785,7 +2878,28 @@ function kn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
           </div>
           <div></div>
         </div>
-      ` : e.source === "price_range" || e.source === "avg_price" ? R`
+      `;
+	if (e.source === "next_price_level") {
+		let i = !!this._config?.detailed_colors;
+		return R`
+        <div class="row">
+          <ha-form
+            .hass=${t}
+            .data=${{ price_level: Et(e.price_level, i) }}
+            .schema=${[{
+			name: "price_level",
+			selector: { select: {
+				mode: "dropdown",
+				options: this._nextPriceLevelOptions(n)
+			} }
+		}]}
+            .computeLabel=${() => q("editor_next_price_level", n)}
+            @value-changed=${(e) => r({ price_level: e.detail.value.price_level })}
+          ></ha-form>
+        </div>
+      `;
+	}
+	return e.source === "price_range" || e.source === "avg_price" ? R`
         <div class="row">
           <ha-form
             .hass=${t}
@@ -2941,7 +3055,7 @@ function kn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
       ` : R``}
     `;
 }
-function An({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallback: a = "attribute", onPatch: o, mode: s = "content", wrapped: c = !0, showRemove: l = !1, onRemove: u = null, hideLabelWhenCurrentPrice: d = !1 }) {
+function In({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallback: a = "attribute", onPatch: o, mode: s = "content", wrapped: c = !0, showRemove: l = !1, onRemove: u = null, hideLabelWhenCurrentPrice: d = !1 }) {
 	let f = R`
       ${t ? R`<div class="slot-card-title">${t}</div>` : R``}
       <div class="two-col">
@@ -2983,7 +3097,7 @@ function An({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallb
     `;
 	return c ? R`<div class="slot-card">${f}</div>` : f;
 }
-function jn({ item: e, key: t, title: n, hass: r, lang: i }) {
+function Ln({ item: e, key: t, title: n, hass: r, lang: i }) {
 	let a = this._headerDefaultSource(t);
 	return this._renderItemEditor({
 		item: e,
@@ -2999,7 +3113,7 @@ function jn({ item: e, key: t, title: n, hass: r, lang: i }) {
 		hideLabelWhenCurrentPrice: !0
 	});
 }
-function Mn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, wrapped: o = !0, showRemove: s = !0 }) {
+function Rn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, wrapped: o = !0, showRemove: s = !0 }) {
 	let c = a || this._contentSourceOptions(i), l = (e) => this._updateContentItem(t, e), u = R`
       ${this._renderItemEditor({
 		item: e,
@@ -3015,7 +3129,7 @@ function Mn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, w
 		hideLabelWhenCurrentPrice: !1,
 		wrapped: !1
 	})}
-      ${On({
+      ${Pn({
 		item: e,
 		index: t,
 		hass: r,
@@ -3026,7 +3140,7 @@ function Mn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, w
     `;
 	return o ? R`<div class="slot-card">${u}</div>` : u;
 }
-function Nn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, lang: a }) {
+function zn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, lang: a }) {
 	let o = this._config?.[e];
 	if (e !== "tap_action" && (!o?.action || o.action === "none")) return R``;
 	let s = this._config?.[t] === "other", c = this._boundComputeLabel ||= this._computeLabel.bind(this), l = (e) => {
@@ -3067,7 +3181,7 @@ function Nn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, la
 }
 //#endregion
 //#region src/editor-render.ts
-function Pn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRight: i, infoItems: a, sourceOptions: o, currencyOverrideOptions: s, currencyLabel: c, minorLabel: l, showCustomCurrency: u, showMinorLabel: d, showFactor: f, effectiveCurrency: p, thresholdHints: m }) {
+function Bn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRight: i, infoItems: a, sourceOptions: o, currencyOverrideOptions: s, currencyLabel: c, minorLabel: l, showCustomCurrency: u, showMinorLabel: d, showFactor: f, effectiveCurrency: p, thresholdHints: m }) {
 	return R`
       <div class="wrap">
         <ha-form
@@ -3500,11 +3614,11 @@ function Pn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRigh
                       <div class="color-label">${this._label(t)}</div>
                       <div class="color-item">
                         <div class="color-swatch">
-                          <input type="color" .value=${Qt(this._config[e], n)} @input=${(t) => this._setColor(e, t.target.value)} />
+                          <input type="color" .value=${St(this._config[e], n)} @input=${(t) => this._setColor(e, t.target.value)} />
                         </div>
                         <ha-textfield
                           label="#"
-                          .value=${Qt(this._config[e], n)}
+                          .value=${St(this._config[e], n)}
                           @input=${(t) => this._setColor(e, t.target.value)}
                         ></ha-textfield>
                       </div>
@@ -3518,28 +3632,28 @@ function Pn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRigh
 }
 //#endregion
 //#region src/editor-thresholds.ts
-function Fn() {
+function Vn() {
 	return this._getSensorThresholdValue("p70");
 }
-function In(e) {
+function Hn(e) {
 	let t = this._hass || this.hass, n = t?.states?.[this._config?.entity];
 	if (!n) return null;
-	let r = n.attributes, i = Z(vt(r), /* @__PURE__ */ new Date(), 0, mt(t));
-	return X(Ut({
+	let r = n.attributes, i = Z(bt(r), /* @__PURE__ */ new Date(), 0, gt(t));
+	return X(cn({
 		...this._config,
 		use_fixed_p20: !1,
 		use_fixed_avg: !1,
 		use_fixed_expensive: !1
 	}, r, i, 1, "today")?.[e]);
 }
-function Ln(e) {
+function Un(e) {
 	return {
 		use_fixed_p20: "fixed_p20_value",
 		use_fixed_avg: "fixed_avg_value",
 		use_fixed_expensive: "fixed_expensive_value"
 	}[e] || "";
 }
-function Rn(e) {
+function Wn(e) {
 	let t = {
 		use_fixed_p20: "p20",
 		use_fixed_avg: "avg",
@@ -3547,14 +3661,14 @@ function Rn(e) {
 	}[e];
 	return t ? this._getSensorThresholdValue(t) : null;
 }
-function zn(e, t) {
+function Gn(e, t) {
 	let n = Number(t);
 	this._commit({
 		...this._config,
 		[e]: Number.isFinite(n) ? n : null
 	});
 }
-function Bn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
+function Kn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
 	let i = !!this._config[e], a = r == null ? "" : String(Y(r, 3));
 	return R`
       <div class="two-col threshold-row">
@@ -3579,7 +3693,7 @@ function Bn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
 }
 //#endregion
 //#region src/price-graph-card-editor.ts
-var Vn = class extends be {
+var qn = class extends be {
 	static get properties() {
 		return {
 			hass: {},
@@ -3596,16 +3710,16 @@ var Vn = class extends be {
 	set hass(e) {
 		this._hass = e;
 		let t = J(e);
-		t !== this._loadedLang && (this._loadedLang = t, $e(t).then(() => this.requestUpdate())), this.requestUpdate();
+		t !== this._loadedLang && (this._loadedLang = t, tt(t).then(() => this.requestUpdate())), this.requestUpdate();
 	}
 	get hass() {
 		return this._hass;
 	}
 	static get styles() {
-		return bn;
+		return Tn;
 	}
 	setConfig(e) {
-		this._config = Be(e);
+		this._config = He(e);
 		for (let e of [
 			"_contentOpen",
 			"_headerOpen",
@@ -3643,14 +3757,14 @@ var Vn = class extends be {
 	}
 	_getCurrency() {
 		let e = (this._hass || this.hass)?.states?.[this._config?.entity];
-		return e ? Et(e.attributes) : "";
+		return e ? Wt(e.attributes) : "";
 	}
 	_sanitizeConfig(e) {
-		return En(e, () => this._getCurrency());
+		return Mn(e, () => this._getCurrency());
 	}
 	_commit(e) {
 		let t = this._sanitizeConfig(e);
-		this._config = Be(t), this.dispatchEvent(new CustomEvent("config-changed", {
+		this._config = He(t), this.dispatchEvent(new CustomEvent("config-changed", {
 			detail: { config: t },
 			bubbles: !0,
 			composed: !0
@@ -3660,10 +3774,10 @@ var Vn = class extends be {
 		return q(e, J(this._hass || this.hass));
 	}
 	_computeLabel(e) {
-		return this._label(Pe[e.name] || e.name);
+		return this._label(Ie[e.name] || e.name);
 	}
 	_setColor(e, t) {
-		let n = Qt(t, this._config[e] || "#ffffff");
+		let n = St(t, this._config[e] || "#ffffff");
 		this._commit({
 			...this._config,
 			[e]: n
@@ -3679,20 +3793,23 @@ var Vn = class extends be {
 		t && i && n[i] == null && r !== null && (n[i] = r), this._commit(n);
 	}
 	_contentSourceOptions(e) {
-		return xn(e);
+		return En(e);
 	}
 	_priceRangeDayOptions(e) {
-		return Sn(e);
+		return On(e);
 	}
 	_itemUnitDisplayOptions(e) {
 		let t = this._config.currency_override || "auto", n = this._getCurrency(), r = t === "auto" ? n : t === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : t;
-		return Cn(this._config, r, e);
+		return kn(this._config, r, e);
+	}
+	_nextPriceLevelOptions(e) {
+		return Dn(!!this._config?.detailed_colors, e);
 	}
 	_headerSourceOptions(e) {
-		return wn(e);
+		return An(e);
 	}
 	_headerDefaultSource(e) {
-		return Tn(e);
+		return jn(e);
 	}
 	_updateHeaderItem(e, t, n = "title") {
 		let r = G(this._config[e], n, "");
@@ -3705,25 +3822,25 @@ var Vn = class extends be {
 		});
 	}
 	_renderItemSourceFields(e) {
-		return kn.call(this, e);
+		return Fn.call(this, e);
 	}
 	_renderItemEditor(e) {
-		return An.call(this, e);
+		return In.call(this, e);
 	}
 	_renderHeaderItemEditor(e) {
-		return jn.call(this, e);
+		return Ln.call(this, e);
 	}
 	_renderSlotEditor(e) {
-		return Mn.call(this, e);
+		return Rn.call(this, e);
 	}
 	_renderOtherEntityAction(e) {
-		return Nn.call(this, e);
+		return zn.call(this, e);
 	}
 	_updateContentItem(e, t) {
 		let n = W(this._config.content_items);
-		for (; n.length <= e && n.length < 16;) n.push(Ie());
+		for (; n.length <= e && n.length < 16;) n.push(Re());
 		e >= 16 || (n[e] = {
-			...n[e] || Ie(),
+			...n[e] || Re(),
 			...t
 		}, this._commit({
 			...this._config,
@@ -3744,7 +3861,7 @@ var Vn = class extends be {
 	}
 	_addContentSlot() {
 		let e = W(this._config.content_items);
-		e.length >= 16 || (e.push(Ie()), this._commit({
+		e.length >= 16 || (e.push(Re()), this._commit({
 			...this._config,
 			content_items: e
 		}));
@@ -3771,27 +3888,27 @@ var Vn = class extends be {
     `;
 	}
 	_getP70SensorValue() {
-		return Fn.call(this);
+		return Vn.call(this);
 	}
 	_getSensorThresholdValue(e) {
-		return In.call(this, e);
+		return Hn.call(this, e);
 	}
 	_fixedThresholdValueKey(e) {
-		return Ln(e);
+		return Un(e);
 	}
 	_getThresholdDefaultValue(e) {
-		return Rn.call(this, e);
+		return Wn.call(this, e);
 	}
 	_setFixedThresholdValue(e, t) {
-		return zn.call(this, e, t);
+		return Gn.call(this, e, t);
 	}
 	_renderFixedThresholdRow(e) {
-		return Bn.call(this, e);
+		return Kn.call(this, e);
 	}
 	render() {
 		let e = this._hass || this.hass;
 		if (!e || !this._config) return R``;
-		let t = J(e), n = this._getCurrency(), r = this._config.currency_override || "auto", i = r === "auto" ? n : r === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : r, a = i ? Dt(i) : !1, o = this._config.unit_format !== "currency", s = o && !a, c = this._config.show_currency_override && r === "custom", l = o && !a, u = i || q("unit_currency", t), d = jt(this._config, i, t) || "", f = this._config.detailed_colors ? {
+		let t = J(e), n = this._getCurrency(), r = this._config.currency_override || "auto", i = r === "auto" ? n : r === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : r, a = i ? Gt(i) : !1, o = this._config.unit_format !== "currency", s = o && !a, c = this._config.show_currency_override && r === "custom", l = o && !a, u = i || q("unit_currency", t), d = Yt(this._config, i, t) || "", f = this._config.detailed_colors ? {
 			p20: this._getSensorThresholdValue("p20"),
 			avg: this._getSensorThresholdValue("avg"),
 			p70: this._getSensorThresholdValue("p70")
@@ -3813,7 +3930,7 @@ var Vn = class extends be {
 				label: q("currency_custom", t)
 			}
 		];
-		return Pn.call(this, {
+		return Bn.call(this, {
 			hass: e,
 			lang: t,
 			computeLabel: p,
@@ -3832,5 +3949,5 @@ var Vn = class extends be {
 		});
 	}
 };
-customElements.get("price-graph-card-editor") || customElements.define(Ce, Vn);
+customElements.get("price-graph-card-editor") || customElements.define(Ce, qn);
 //#endregion

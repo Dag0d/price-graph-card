@@ -17,9 +17,11 @@ export const KNOWN_CURRENCIES = Object.freeze([
 ]);
 
 export const KNOWN_CURRENCY_SET = new Set(KNOWN_CURRENCIES);
-export const CONTENT_SOURCES = Object.freeze(["attribute", "entity", "price_level", "current_price", "price_range", "avg_price"]);
+export const CONTENT_SOURCES = Object.freeze(["attribute", "entity", "price_level", "next_price_level", "current_price", "price_range", "avg_price"]);
 export const HEADER_SOURCES = Object.freeze(["title", ...CONTENT_SOURCES]);
 export const UNIT_DISPLAY_MODES = Object.freeze(["per_kwh", "value_only"]);
+export const SIMPLE_PRICE_LEVELS = Object.freeze(["below_avg", "above_avg"]);
+export const DETAILED_PRICE_LEVELS = Object.freeze(["cheap", "normal", "expensive", "very_expensive"]);
 export const TICK_STEPS = Object.freeze([[0.08,0.01],[0.16,0.02],[0.3,0.05],[0.8,0.1],[1.6,0.2],[3.5,0.5],[8,1],[16,2],[35,5],[80,10]]);
 export const GEAR_ICON_PATH = "M19.14,12.94C19.18,12.64 19.2,12.33 19.2,12C19.2,11.68 19.18,11.36 19.13,11.06L21.19,9.45C21.37,9.31 21.42,9.05 21.3,8.84L19.3,5.38C19.18,5.16 18.92,5.08 18.69,5.16L16.26,6.14C15.76,5.76 15.23,5.45 14.62,5.22L14.25,2.64C14.21,2.4 14,2.22 13.75,2.22H10.25C10,2.22 9.79,2.4 9.76,2.64L9.38,5.22C8.77,5.45 8.24,5.76 7.74,6.14L5.31,5.16C5.08,5.08 4.82,5.16 4.7,5.38L2.7,8.84C2.57,9.05 2.63,9.31 2.81,9.45L4.86,11.06C4.82,11.36 4.8,11.69 4.8,12C4.8,12.31 4.82,12.64 4.87,12.94L2.81,14.55C2.63,14.69 2.57,14.95 2.7,15.16L4.7,18.62C4.82,18.84 5.08,18.92 5.31,18.84L7.74,17.86C8.24,18.24 8.77,18.55 9.38,18.78L9.76,21.36C9.79,21.6 10,21.78 10.25,21.78H13.75C14,21.78 14.21,21.6 14.24,21.36L14.62,18.78C15.23,18.55 15.76,18.24 16.26,17.86L18.69,18.84C18.92,18.92 19.18,18.84 19.3,18.62L21.3,15.16C21.42,14.95 21.37,14.69 21.19,14.55L19.14,12.94M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5Z";
 

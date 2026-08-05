@@ -1,4 +1,5 @@
 import { html } from "lit";
+import { normalizePriceLevelTarget } from "./graph";
 import { localize } from "./i18n";
 
 function normalizeSlotActions(actions) {
@@ -112,6 +113,24 @@ export function renderItemSourceFields({ item, hass, lang, onPatch, mode = "cont
             <div class="toggle-label">${localize("editor_content_use_color", lang)}</div>
           </div>
           <div></div>
+        </div>
+      `;
+    }
+    if (item.source === "next_price_level") {
+      const detailed = !!this._config?.detailed_colors;
+      const priceLevel = normalizePriceLevelTarget(item.price_level, detailed);
+      return html`
+        <div class="row">
+          <ha-form
+            .hass=${hass}
+            .data=${{ price_level: priceLevel }}
+            .schema=${[{
+              name: "price_level",
+              selector: { select: { mode: "dropdown", options: this._nextPriceLevelOptions(lang) } },
+            }]}
+            .computeLabel=${() => localize("editor_next_price_level", lang)}
+            @value-changed=${(e) => onPatch({ price_level: e.detail.value.price_level })}
+          ></ha-form>
         </div>
       `;
     }

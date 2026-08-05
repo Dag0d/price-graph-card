@@ -1,6 +1,7 @@
 import { normalizeRangeDay } from "./config";
 import { mean, quantile, readAttrNumber, extractTimelineFromAttributes, filterToDay, safeNumber } from "./data";
 import { formatDisplayValue } from "./format";
+import { normalizePriceLevelTarget, priceLevelKey } from "./graph";
 import { localize } from "./i18n";
 import { addDaysInTimeZone, alignTimeToDayInTimeZone, formatHHMMInTimeZone, startOfDayInTimeZone } from "./time";
 import { applyUnitFactor, formatUnitByMode, getDisplayUnit, getEffectiveCurrency, getUnitFactor } from "./units";
@@ -190,6 +191,34 @@ export function getThresholdsForDay(cfg, attrs, points, factor, dayKey) {
   const b = clamp(avg ?? a, a, c);
 
   return { p20: a, avg: b, p70: c, fixed: null, detailed: !!cfg.detailed_colors };
+}
+
+export function getNextPriceLevelTimeText(cfg, attrs, timelineAll, requestedLevel, lang, timeZone = "UTC", now = new Date()) {
+  const detailed = !!cfg?.detailed_colors;
+  const targetLevel = normalizePriceLevelTarget(requestedLevel, detailed);
+  const factor = getUnitFactor(cfg, getEffectiveCurrency(cfg, attrs));
+
+  for (const offsetDays of [0, 1]) {
+    const dayKey = offsetDays === 0 ? "today" : "tomorrow";
+    const rawPoints = filterToDay(timelineAll, now, offsetDays, timeZone);
+    const points = applyUnitFactor(rawPoints, factor).points;
+    if (!points.length) continue;
+    const thresholds = getThresholdsForDay(cfg, attrs, points, factor, dayKey);
+
+    for (let index = 0; index < points.length; index++) {
+      const point = points[index];
+      if (priceLevelKey(point.price, thresholds, detailed) !== targetLevel) continue;
+      const startMs = point.start.getTime();
+      if (startMs > now.getTime()) {
+        const time = formatHHMMInTimeZone(point.start, timeZone);
+        return offsetDays === 0 ? time : localize("next_price_level_tomorrow", lang, { time });
+      }
+      const endMs = startMs + inferTimelineIntervalMs(points, index);
+      if (now.getTime() >= startMs && now.getTime() < endMs) return localize("label_now", lang);
+    }
+  }
+
+  return "—";
 }
 
 

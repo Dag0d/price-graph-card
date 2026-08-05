@@ -1,21 +1,16 @@
 name: HACS Validation
+run-name: HACS Validation ${{ inputs.bridge_run_token }}
 
 on:
   workflow_dispatch:
     inputs:
-      category:
-        description: HACS category
-        required: true
-        type: string
-      ignore:
-        description: Space separated ignore list
-        required: false
-        default: images
-        type: string
       repository_ref:
         description: Ref to validate
-        required: false
-        default: ""
+        required: true
+        type: string
+      bridge_run_token:
+        description: Internal bridge dispatch correlation token
+        required: true
         type: string
 
 permissions:
@@ -30,5 +25,5 @@ jobs:
       - name: HACS validation
         uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa
         with:
-          category: ${{ inputs.category }}
-          ignore: ${{ inputs.ignore }}
+          category: "plugin"
+          ignore: "images"

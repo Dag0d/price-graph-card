@@ -9,6 +9,7 @@ Home Assistant dashboard card for spot market electricity prices. The card rende
 - Automatic or fixed price thresholds
 - Currency and minor-unit display
 - Extra information slots from attributes, entities, current price, price ranges, and averages
+- Next occurrence of a selected dynamic price level
 - Home Assistant tap, hold, and double-tap actions
 - German and English editor/card labels
 
@@ -152,7 +153,7 @@ Tomorrow views become available when `tomorrow_status` is `ok` or `preview`, or 
 
 ## Extra Content Slots
 
-`content_items` can show values from attributes, other entities, the current price, price level, price range, or average price.
+`content_items` can show values from attributes, other entities, the current price, price level, the next occurrence of a selected price level, price range, or average price.
 
 ```yaml
 content_items:
@@ -166,7 +167,12 @@ content_items:
   - label: Source
     source: attribute
     attribute: last_successful_source_id
+  - label: Cheap again at
+    source: next_price_level
+    price_level: cheap
 ```
+
+For `source: next_price_level`, the editor offers `below average` and `above average` with the simple two-color graph. With detailed colors enabled it offers `cheap`, `normal`, `expensive`, and `very expensive`. The lookup uses the exact same calculated or fixed thresholds as the graph.
 
 Each extra slot can also define its own Home Assistant interactions. If no explicit target entity is set, actions use the slot entity for `source: entity` items and otherwise fall back to the main card entity.
 
@@ -209,7 +215,7 @@ The Gitea workflow sequence:
 5. marks the source and build commits as pending and dispatches the separate HACS workflow;
 6. moves the validated commit to `main`, records the build, HACS and publication statuses, and always removes the temporary branch.
 
-Published Gitea releases repeat the test and build checks, attach `price-graph-card.js` as a release asset, validate the completed release through the temporary GitHub bridge, and finally update the permanent GitHub release mirror.
+Published Gitea releases repeat the test and build checks and attach `price-graph-card.js` as a release asset. The bridge then validates a candidate in the permanent GitHub repository, promotes that exact commit to the permanent branch and release tag, and runs HACS once more on the published ref so the final commit carries the real GitHub check result.
 
 A separate compatibility check validates the current `main` commit through a temporary GitHub repository every Monday at 02:49 UTC. It does not build or publish anything and records its result as `Weekly HACS Validation` on the checked commit.
 

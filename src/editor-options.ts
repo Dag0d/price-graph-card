@@ -6,10 +6,25 @@ export function contentSourceOptions(lang: string) {
     { value: "attribute", label: localize("editor_content_source_attr", lang) },
     { value: "entity", label: localize("editor_content_source_entity", lang) },
     { value: "price_level", label: localize("editor_content_source_price", lang) },
+    { value: "next_price_level", label: localize("editor_content_source_next_price_level", lang) },
     { value: "current_price", label: localize("editor_content_source_current", lang) },
     { value: "price_range", label: localize("editor_content_source_price_range", lang) },
     { value: "avg_price", label: localize("editor_content_source_avg_price", lang) },
   ];
+}
+
+export function nextPriceLevelOptions(detailed: boolean, lang: string) {
+  return detailed
+    ? [
+        { value: "cheap", label: localize("region_cheap", lang) },
+        { value: "normal", label: localize("region_normal", lang) },
+        { value: "expensive", label: localize("region_expensive", lang) },
+        { value: "very_expensive", label: localize("region_very_expensive", lang) },
+      ]
+    : [
+        { value: "below_avg", label: localize("region_below_avg", lang) },
+        { value: "above_avg", label: localize("region_above_avg", lang) },
+      ];
 }
 
 export function priceRangeDayOptions(lang: string) {

@@ -16,6 +16,7 @@ export function createEmptyContentItem() {
     show_unit: false,
     unit_display_mode: "per_kwh",
     use_color: false,
+    price_level: "",
     range_day: "today",
     actions: createContentItemActions(),
   };
@@ -41,6 +42,7 @@ export function createHeaderItem(source = "title", label = "") {
     show_unit: false,
     unit_display_mode: "per_kwh",
     use_color: false,
+    price_level: "",
     time_overwrite: false,
     range_day: "today",
   };
@@ -141,6 +143,7 @@ export function normalizeContentItems(items: any) {
       show_unit: it.show_unit === undefined ? defaultShowUnit : !!it.show_unit,
       unit_display_mode: normalizeUnitDisplayMode(it.unit_display_mode),
       use_color: !!it.use_color,
+      price_level: String(it.price_level || "").trim(),
       range_day: normalizeRangeDay(it.range_day),
       actions: normalizeContentItemActions(it.actions),
     });
@@ -160,6 +163,7 @@ export function normalizeHeaderItem(item: any, defaultSource = "title", defaultL
     show_unit: item.show_unit === undefined ? defaultShowUnit : !!item.show_unit,
     unit_display_mode: normalizeUnitDisplayMode(item.unit_display_mode),
     use_color: !!item.use_color,
+    price_level: String(item.price_level || "").trim(),
     time_overwrite: !!item.time_overwrite,
     range_day: normalizeRangeDay(item.range_day),
   };
@@ -185,6 +189,8 @@ function emitSourceFields(normalized: any, out: any, includeTimeOverwrite = fals
     if (normalized.show_unit && normalized.unit_display_mode !== "per_kwh") out.unit_display_mode = normalized.unit_display_mode;
   } else if (source === "price_level") {
     if (normalized.use_color) out.use_color = true;
+  } else if (source === "next_price_level") {
+    if (normalized.price_level) out.price_level = normalized.price_level;
   }
 }
 
