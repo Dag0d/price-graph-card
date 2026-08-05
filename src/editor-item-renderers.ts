@@ -248,11 +248,16 @@ export function renderItemSourceFields({ item, hass, lang, onPatch, mode = "cont
         ` : item.source === "current_price" ? html`
           <div></div>
         ` : html`
-          <ha-textfield
-            label="${localize("editor_content_attribute", lang)}"
-            .value=${item.attribute || ""}
-            @input=${(e) => onPatch({ attribute: e.target.value })}
-          ></ha-textfield>
+          <ha-form
+            .hass=${hass}
+            .data=${{ attribute: item.attribute || "" }}
+            .schema=${[{
+              name: "attribute",
+              selector: { select: { mode: "dropdown", options: this._attributeOptions() } },
+            }]}
+            .computeLabel=${() => localize("editor_content_attribute", lang)}
+            @value-changed=${(e) => onPatch({ attribute: e.detail.value.attribute })}
+          ></ha-form>
         `}
         <div class="toggle-item">
           <ha-switch

@@ -1,6 +1,15 @@
 import { localize } from "./i18n";
 import { getMinorLabel } from "./units";
 
+export function attributeOptions(hass: any, entityId: string) {
+  const attributes = hass?.states?.[entityId]?.attributes;
+  if (!attributes || typeof attributes !== "object") return [];
+  return Object.keys(attributes)
+    .filter((key) => key !== "data")
+    .sort((a, b) => a.localeCompare(b))
+    .map((key) => ({ value: key, label: key }));
+}
+
 export function contentSourceOptions(lang: string) {
   return [
     { value: "attribute", label: localize("editor_content_source_attr", lang) },

@@ -14,6 +14,7 @@ import {
 import { ensureLanguage, getLang, localize } from "./i18n";
 import { EDITOR_STYLES } from "./editor-styles";
 import {
+  attributeOptions,
   contentSourceOptions,
   headerDefaultSource,
   headerSourceOptions,
@@ -151,6 +152,11 @@ class PriceGraphCardEditor extends LitElement {
 
   _contentSourceOptions(lang) {
     return contentSourceOptions(lang);
+  }
+
+  _attributeOptions() {
+    const hass = this._hass || this.hass;
+    return attributeOptions(hass, this._config?.entity);
   }
 
   _priceRangeDayOptions(lang) {

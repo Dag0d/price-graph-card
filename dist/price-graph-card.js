@@ -2235,7 +2235,7 @@ function bn() {
 }
 //#endregion
 //#region src/price-graph-card.ts
-var xn = () => window.customCardHelpers || null, Sn = "2026.8.3";
+var xn = () => window.customCardHelpers || null, Sn = "2026.8.4";
 function Cn(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
@@ -2647,7 +2647,14 @@ var Tn = o`
     `;
 //#endregion
 //#region src/editor-options.ts
-function En(e) {
+function En(e, t) {
+	let n = e?.states?.[t]?.attributes;
+	return !n || typeof n != "object" ? [] : Object.keys(n).filter((e) => e !== "data").sort((e, t) => e.localeCompare(t)).map((e) => ({
+		value: e,
+		label: e
+	}));
+}
+function Dn(e) {
 	return [
 		{
 			value: "attribute",
@@ -2679,7 +2686,7 @@ function En(e) {
 		}
 	];
 }
-function Dn(e, t) {
+function On(e, t) {
 	return e ? [
 		{
 			value: "cheap",
@@ -2705,7 +2712,7 @@ function Dn(e, t) {
 		label: q("region_above_avg", t)
 	}];
 }
-function On(e) {
+function kn(e) {
 	return [
 		{
 			value: "selected",
@@ -2725,7 +2732,7 @@ function On(e) {
 		}
 	];
 }
-function kn(e, t, n) {
+function An(e, t, n) {
 	let r = e.unit_format === "minor" ? Yt(e, t, n) || q("unit_minor", n) : t || q("unit_currency", n);
 	return [{
 		value: "value_only",
@@ -2735,18 +2742,18 @@ function kn(e, t, n) {
 		label: `${r}/kWh`
 	}];
 }
-function An(e) {
+function jn(e) {
 	return [{
 		value: "title",
 		label: q("editor_content_source_title", e)
-	}, ...En(e)];
+	}, ...Dn(e)];
 }
-function jn(e) {
+function Mn(e) {
 	return e === "title_item_left" ? "title" : "attribute";
 }
 //#endregion
 //#region src/editor-sanitize.ts
-function Mn(e, t) {
+function Nn(e, t) {
 	let n = { ...e };
 	delete n.title;
 	let r = n.currency_override || "auto", i = r === "auto" ? t() : r === "custom" ? String(n.currency_custom || "").trim().toUpperCase() : r, a = i ? Gt(i) : !1, o = n.unit_format !== "currency";
@@ -2774,7 +2781,7 @@ function Mn(e, t) {
 }
 //#endregion
 //#region src/editor-item-renderers.ts
-function Nn(e) {
+function Pn(e) {
 	return {
 		enabled: !!e?.enabled,
 		tap_action: e?.tap_action || { action: "more-info" },
@@ -2784,8 +2791,8 @@ function Nn(e) {
 		target_entity: e?.target_entity || ""
 	};
 }
-function Pn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEntity: a }) {
-	let o = Nn(e.actions), s = (e) => i({ actions: {
+function Fn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEntity: a }) {
+	let o = Pn(e.actions), s = (e) => i({ actions: {
 		...o,
 		...e
 	} }), c = (e) => {
@@ -2865,7 +2872,7 @@ function Pn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEnt
     </div>
   `;
 }
-function Fn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
+function In({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
 	if (e.source === "title") return R``;
 	if (e.source === "price_level") return R`
         <div class="two-col">
@@ -3019,11 +3026,19 @@ function Fn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
         ` : e.source === "current_price" ? R`
           <div></div>
         ` : R`
-          <ha-textfield
-            label="${q("editor_content_attribute", n)}"
-            .value=${e.attribute || ""}
-            @input=${(e) => r({ attribute: e.target.value })}
-          ></ha-textfield>
+          <ha-form
+            .hass=${t}
+            .data=${{ attribute: e.attribute || "" }}
+            .schema=${[{
+		name: "attribute",
+		selector: { select: {
+			mode: "dropdown",
+			options: this._attributeOptions()
+		} }
+	}]}
+            .computeLabel=${() => q("editor_content_attribute", n)}
+            @value-changed=${(e) => r({ attribute: e.detail.value.attribute })}
+          ></ha-form>
         `}
         <div class="toggle-item">
           <ha-switch
@@ -3055,7 +3070,7 @@ function Fn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
       ` : R``}
     `;
 }
-function In({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallback: a = "attribute", onPatch: o, mode: s = "content", wrapped: c = !0, showRemove: l = !1, onRemove: u = null, hideLabelWhenCurrentPrice: d = !1 }) {
+function Ln({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallback: a = "attribute", onPatch: o, mode: s = "content", wrapped: c = !0, showRemove: l = !1, onRemove: u = null, hideLabelWhenCurrentPrice: d = !1 }) {
 	let f = R`
       ${t ? R`<div class="slot-card-title">${t}</div>` : R``}
       <div class="two-col">
@@ -3097,7 +3112,7 @@ function In({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallb
     `;
 	return c ? R`<div class="slot-card">${f}</div>` : f;
 }
-function Ln({ item: e, key: t, title: n, hass: r, lang: i }) {
+function Rn({ item: e, key: t, title: n, hass: r, lang: i }) {
 	let a = this._headerDefaultSource(t);
 	return this._renderItemEditor({
 		item: e,
@@ -3113,7 +3128,7 @@ function Ln({ item: e, key: t, title: n, hass: r, lang: i }) {
 		hideLabelWhenCurrentPrice: !0
 	});
 }
-function Rn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, wrapped: o = !0, showRemove: s = !0 }) {
+function zn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, wrapped: o = !0, showRemove: s = !0 }) {
 	let c = a || this._contentSourceOptions(i), l = (e) => this._updateContentItem(t, e), u = R`
       ${this._renderItemEditor({
 		item: e,
@@ -3129,7 +3144,7 @@ function Rn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, w
 		hideLabelWhenCurrentPrice: !1,
 		wrapped: !1
 	})}
-      ${Pn({
+      ${Fn({
 		item: e,
 		index: t,
 		hass: r,
@@ -3140,7 +3155,7 @@ function Rn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, w
     `;
 	return o ? R`<div class="slot-card">${u}</div>` : u;
 }
-function zn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, lang: a }) {
+function Bn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, lang: a }) {
 	let o = this._config?.[e];
 	if (e !== "tap_action" && (!o?.action || o.action === "none")) return R``;
 	let s = this._config?.[t] === "other", c = this._boundComputeLabel ||= this._computeLabel.bind(this), l = (e) => {
@@ -3181,7 +3196,7 @@ function zn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, la
 }
 //#endregion
 //#region src/editor-render.ts
-function Bn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRight: i, infoItems: a, sourceOptions: o, currencyOverrideOptions: s, currencyLabel: c, minorLabel: l, showCustomCurrency: u, showMinorLabel: d, showFactor: f, effectiveCurrency: p, thresholdHints: m }) {
+function Vn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRight: i, infoItems: a, sourceOptions: o, currencyOverrideOptions: s, currencyLabel: c, minorLabel: l, showCustomCurrency: u, showMinorLabel: d, showFactor: f, effectiveCurrency: p, thresholdHints: m }) {
 	return R`
       <div class="wrap">
         <ha-form
@@ -3632,10 +3647,10 @@ function Bn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRigh
 }
 //#endregion
 //#region src/editor-thresholds.ts
-function Vn() {
+function Hn() {
 	return this._getSensorThresholdValue("p70");
 }
-function Hn(e) {
+function Un(e) {
 	let t = this._hass || this.hass, n = t?.states?.[this._config?.entity];
 	if (!n) return null;
 	let r = n.attributes, i = Z(bt(r), /* @__PURE__ */ new Date(), 0, gt(t));
@@ -3646,14 +3661,14 @@ function Hn(e) {
 		use_fixed_expensive: !1
 	}, r, i, 1, "today")?.[e]);
 }
-function Un(e) {
+function Wn(e) {
 	return {
 		use_fixed_p20: "fixed_p20_value",
 		use_fixed_avg: "fixed_avg_value",
 		use_fixed_expensive: "fixed_expensive_value"
 	}[e] || "";
 }
-function Wn(e) {
+function Gn(e) {
 	let t = {
 		use_fixed_p20: "p20",
 		use_fixed_avg: "avg",
@@ -3661,14 +3676,14 @@ function Wn(e) {
 	}[e];
 	return t ? this._getSensorThresholdValue(t) : null;
 }
-function Gn(e, t) {
+function Kn(e, t) {
 	let n = Number(t);
 	this._commit({
 		...this._config,
 		[e]: Number.isFinite(n) ? n : null
 	});
 }
-function Kn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
+function qn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
 	let i = !!this._config[e], a = r == null ? "" : String(Y(r, 3));
 	return R`
       <div class="two-col threshold-row">
@@ -3693,7 +3708,7 @@ function Kn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
 }
 //#endregion
 //#region src/price-graph-card-editor.ts
-var qn = class extends be {
+var Jn = class extends be {
 	static get properties() {
 		return {
 			hass: {},
@@ -3760,7 +3775,7 @@ var qn = class extends be {
 		return e ? Wt(e.attributes) : "";
 	}
 	_sanitizeConfig(e) {
-		return Mn(e, () => this._getCurrency());
+		return Nn(e, () => this._getCurrency());
 	}
 	_commit(e) {
 		let t = this._sanitizeConfig(e);
@@ -3793,23 +3808,26 @@ var qn = class extends be {
 		t && i && n[i] == null && r !== null && (n[i] = r), this._commit(n);
 	}
 	_contentSourceOptions(e) {
-		return En(e);
+		return Dn(e);
+	}
+	_attributeOptions() {
+		return En(this._hass || this.hass, this._config?.entity);
 	}
 	_priceRangeDayOptions(e) {
-		return On(e);
+		return kn(e);
 	}
 	_itemUnitDisplayOptions(e) {
 		let t = this._config.currency_override || "auto", n = this._getCurrency(), r = t === "auto" ? n : t === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : t;
-		return kn(this._config, r, e);
+		return An(this._config, r, e);
 	}
 	_nextPriceLevelOptions(e) {
-		return Dn(!!this._config?.detailed_colors, e);
+		return On(!!this._config?.detailed_colors, e);
 	}
 	_headerSourceOptions(e) {
-		return An(e);
+		return jn(e);
 	}
 	_headerDefaultSource(e) {
-		return jn(e);
+		return Mn(e);
 	}
 	_updateHeaderItem(e, t, n = "title") {
 		let r = G(this._config[e], n, "");
@@ -3822,19 +3840,19 @@ var qn = class extends be {
 		});
 	}
 	_renderItemSourceFields(e) {
-		return Fn.call(this, e);
-	}
-	_renderItemEditor(e) {
 		return In.call(this, e);
 	}
-	_renderHeaderItemEditor(e) {
+	_renderItemEditor(e) {
 		return Ln.call(this, e);
 	}
-	_renderSlotEditor(e) {
+	_renderHeaderItemEditor(e) {
 		return Rn.call(this, e);
 	}
-	_renderOtherEntityAction(e) {
+	_renderSlotEditor(e) {
 		return zn.call(this, e);
+	}
+	_renderOtherEntityAction(e) {
+		return Bn.call(this, e);
 	}
 	_updateContentItem(e, t) {
 		let n = W(this._config.content_items);
@@ -3888,22 +3906,22 @@ var qn = class extends be {
     `;
 	}
 	_getP70SensorValue() {
-		return Vn.call(this);
+		return Hn.call(this);
 	}
 	_getSensorThresholdValue(e) {
-		return Hn.call(this, e);
+		return Un.call(this, e);
 	}
 	_fixedThresholdValueKey(e) {
-		return Un(e);
+		return Wn(e);
 	}
 	_getThresholdDefaultValue(e) {
-		return Wn.call(this, e);
+		return Gn.call(this, e);
 	}
 	_setFixedThresholdValue(e, t) {
-		return Gn.call(this, e, t);
+		return Kn.call(this, e, t);
 	}
 	_renderFixedThresholdRow(e) {
-		return Kn.call(this, e);
+		return qn.call(this, e);
 	}
 	render() {
 		let e = this._hass || this.hass;
@@ -3930,7 +3948,7 @@ var qn = class extends be {
 				label: q("currency_custom", t)
 			}
 		];
-		return Bn.call(this, {
+		return Vn.call(this, {
 			hass: e,
 			lang: t,
 			computeLabel: p,
@@ -3949,5 +3967,5 @@ var qn = class extends be {
 		});
 	}
 };
-customElements.get("price-graph-card-editor") || customElements.define(Ce, qn);
+customElements.get("price-graph-card-editor") || customElements.define(Ce, Jn);
 //#endregion

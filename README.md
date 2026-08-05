@@ -174,6 +174,8 @@ content_items:
 
 For `source: next_price_level`, the editor offers `below average` and `above average` with the simple two-color graph. With detailed colors enabled it offers `cheap`, `normal`, `expensive`, and `very expensive`. The lookup uses the exact same calculated or fixed thresholds as the graph.
 
+For `source: attribute`, the editor dynamically lists the configured entity's available attributes and excludes the price timeline's `data` attribute.
+
 Each extra slot can also define its own Home Assistant interactions. If no explicit target entity is set, actions use the slot entity for `source: entity` items and otherwise fall back to the main card entity.
 
 ```yaml

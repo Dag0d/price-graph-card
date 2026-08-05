@@ -1,5 +1,5 @@
 name: HACS Validation
-run-name: HACS Validation ${{ inputs.bridge_run_token }}
+run-name: HACS Validation ${{ github.event_name == 'workflow_dispatch' && inputs.bridge_run_token || github.ref_name }}
 
 on:
   workflow_dispatch:
@@ -13,6 +13,10 @@ on:
         required: true
         type: string
 
+  push:
+    branches:
+      - "main"
+
 permissions:
   contents: read
 
@@ -20,7 +24,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      REPOSITORY_REF: ${{ inputs.repository_ref }}
+      REPOSITORY_REF: ${{ inputs.repository_ref || github.ref }}
     steps:
       - name: HACS validation
         uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa
