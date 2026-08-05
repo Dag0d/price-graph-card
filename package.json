@@ -1,0 +1,30 @@
+{
+  "name": "price-graph-card",
+  "version": "2026.8.1",
+  "description": "Home Assistant dashboard card for spot market electricity price timelines.",
+  "type": "module",
+  "private": false,
+  "scripts": {
+    "test": "vitest run",
+    "build": "vite build",
+    "check": "tsc --noEmit --pretty false",
+    "syntax": "node --check dist/price-graph-card.js",
+    "ci": "npm test && npm run check && npm run build && npm run syntax"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "energy",
+    "electricity-price"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}
