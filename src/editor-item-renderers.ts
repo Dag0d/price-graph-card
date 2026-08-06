@@ -289,6 +289,10 @@ export function renderItemSourceFields({ item, hass, lang, onPatch, mode = "cont
 
 
 
+export function shouldShowItemLabel(item, hideLabelWhenCurrentPrice = false) {
+  return !hideLabelWhenCurrentPrice || item?.source !== "current_price" || !!item?.time_overwrite;
+}
+
 export function renderItemEditor({
     item,
     title,
@@ -303,15 +307,20 @@ export function renderItemEditor({
     onRemove = null,
     hideLabelWhenCurrentPrice = false,
   }) {
+    const showLabel = shouldShowItemLabel(item, hideLabelWhenCurrentPrice);
     const body = html`
       ${title ? html`<div class="slot-card-title">${title}</div>` : html``}
       <div class="two-col">
-        ${hideLabelWhenCurrentPrice && item.source === "current_price" && !item.time_overwrite ? html`<div></div>` : html`
-          <ha-textfield
-            label="${localize("editor_content_label", lang)}"
-            .value=${item.label || ""}
-            @input=${(e) => onPatch({ label: e.target.value })}
-          ></ha-textfield>
+        ${showLabel ? html`
+          <ha-form
+            .hass=${hass}
+            .data=${{ label: item.label || "" }}
+            .schema=${[{ name: "label", selector: { text: {} } }]}
+            .computeLabel=${() => localize("editor_content_label", lang)}
+            @value-changed=${(e) => onPatch({ label: e.detail.value.label })}
+          ></ha-form>
+        ` : html`
+          <div></div>
         `}
         <ha-form
           .hass=${hass}

@@ -1,6 +1,6 @@
 {
   "name": "price-graph-card",
-  "version": "2026.8.5",
+  "version": "2026.8.6",
   "description": "Home Assistant dashboard card for spot market electricity price timelines.",
   "type": "module",
   "private": false,
