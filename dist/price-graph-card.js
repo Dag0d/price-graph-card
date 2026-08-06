@@ -2235,7 +2235,7 @@ function bn() {
 }
 //#endregion
 //#region src/price-graph-card.ts
-var xn = () => window.customCardHelpers || null, Sn = "2026.8.4";
+var xn = () => window.customCardHelpers || null, Sn = "2026.8.5";
 function Cn(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }

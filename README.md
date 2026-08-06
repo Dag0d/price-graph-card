@@ -217,7 +217,7 @@ The Gitea workflow sequence:
 5. marks the source and build commits as pending and dispatches the separate HACS workflow;
 6. moves the validated commit to `main`, records the build, HACS and publication statuses, and always removes the temporary branch.
 
-Published Gitea releases repeat the test and build checks and attach `price-graph-card.js` as a release asset. The bridge then validates a candidate in the permanent GitHub repository, promotes that exact commit to the permanent branch and release tag, and runs HACS once more on the published ref so the final commit carries the real GitHub check result.
+Published Gitea releases repeat the test and build checks and attach `price-graph-card.js` as a release asset. The bridge then validates a candidate in the permanent GitHub repository, promotes that exact commit to the permanent branch and release tag, and runs HACS once more on the published ref so the final commit carries the real GitHub check result. After the final check succeeds, its successful candidate run is removed while the published push run remains visible.
 
 A separate compatibility check validates the current `main` commit through a temporary GitHub repository every Monday at 02:49 UTC. It does not build or publish anything and records its result as `Weekly HACS Validation` on the checked commit.
 
