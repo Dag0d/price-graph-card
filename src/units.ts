@@ -13,9 +13,13 @@ function escapeRegExp(value: any) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const currencySymbolCache = new Map<string, string[]>();
+
 function getCurrencySymbols(code: any) {
   const normalized = String(code || "").trim().toUpperCase();
   if (!/^[A-Z]{3}$/.test(normalized)) return [];
+  const cached = currencySymbolCache.get(normalized);
+  if (cached) return cached;
   const out = new Set<string>();
   const currencyDisplayModes: Array<Intl.NumberFormatOptions["currencyDisplay"]> = ["symbol", "narrowSymbol"];
   for (const currencyDisplay of currencyDisplayModes) {
@@ -30,7 +34,9 @@ function getCurrencySymbols(code: any) {
     } catch (_err) {
     }
   }
-  return [...out];
+  const symbols = [...out];
+  currencySymbolCache.set(normalized, symbols);
+  return symbols;
 }
 
 export function buildEntityUnitTokens(st: any, unit: any) {

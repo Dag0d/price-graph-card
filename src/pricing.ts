@@ -3,7 +3,7 @@ import { mean, quantile, readAttrNumber, extractTimelineFromAttributes, filterTo
 import { formatDisplayValue } from "./format";
 import { normalizePriceLevelTarget, priceLevelKey } from "./graph";
 import { localize } from "./i18n";
-import { addDaysInTimeZone, alignTimeToDayInTimeZone, formatHHMMInTimeZone, startOfDayInTimeZone } from "./time";
+import { addDaysInTimeZone, alignPointsToDayByClock, formatHHMMInTimeZone, startOfDayInTimeZone } from "./time";
 import { applyUnitFactor, formatUnitByMode, getDisplayUnit, getEffectiveCurrency, getUnitFactor } from "./units";
 
 function clamp(n: number, a: number, b: number) {
@@ -293,10 +293,7 @@ export function buildDayContext(cfg, st, dayViewInput, timeZone = "UTC") {
         } else {
           dayPoints = todayScaled;
           overlayPoints = tomorrowScaled;
-          overlayShifted = tomorrowScaled.map(p => ({
-            ...p,
-            start: alignTimeToDayInTimeZone(p.start, todayStart, timeZone),
-          }));
+          overlayShifted = alignPointsToDayByClock(tomorrowScaled, todayStart, timeZone);
           thresholds = getThresholdsForDay(cfg, attrs, dayPoints, factor, "today");
           dayHours = hoursBetween(todayStart, tomorrowStart);
           debugPointsCount = dayPoints.length;

@@ -1,11 +1,12 @@
-import { LitElement } from "lit";
+import { LitElement, unsafeCSS } from "lit";
 import {
   CARD_TAG,
   DETAILED_COLOR_CONFIG,
   EDITOR_TAG,
   TIMELINE_CANVAS_HEIGHT,
 } from "./const";
-import { mergeConfig, normalizeContentItems, normalizeHeaderItem } from "./config";
+import { mergeConfig, normalizeContentItems } from "./config";
+import { getWatchedEntityIds, haveWatchedStatesChanged, isHassChangeRelevant } from "./hass-updates";
 import { ensureLanguage, getLang } from "./i18n";
 import { roundTo } from "./format";
 import {
@@ -13,7 +14,9 @@ import {
   getThresholdsForDay,
   normalizeDayView,
 } from "./pricing";
+import { DOUBLE_TAP_WINDOW_MS, isActivationKey } from "./card-actions";
 import { renderCard } from "./card-render";
+import { CARD_CSS } from "./card-styles";
 import { updateCard } from "./card-update";
 import { millisecondsUntilNextMinute, startOfDayInTimeZone } from "./time";
 const getHelpers = () => window.customCardHelpers || null;
@@ -33,24 +36,30 @@ export {
 class PriceGraphCard extends LitElement {
   [key: string]: any;
 
+  // `hass` is deliberately not a reactive property: Lit would wrap the setter below
+  // and re-render on every Home Assistant update instead of only on relevant ones.
   static get properties() {
     return {
-      hass: {},
       _config: { state: true },
       _dayView: { state: true },
     };
   }
 
+  // Parsed once and shared by all card instances (adopted stylesheet) instead of a <style> per card.
+  static styles = unsafeCSS(CARD_CSS);
+
   set hass(hass) {
+    const previous = this._hass;
     this._hass = hass;
     this._effectiveHassCache = null;
-    if (this.isConnected) this._scheduleClockUpdate();
     const lang = getLang(hass);
     if (lang !== this._loadedLang) {
       this._loadedLang = lang;
       ensureLanguage(lang).then(() => this.requestUpdate());
     }
-    this.requestUpdate();
+    if (!isHassChangeRelevant(previous, hass, this._getWatchedEntityIds())) return;
+    if (this.isConnected) this._scheduleClockUpdate();
+    this.requestUpdate("hass", previous);
   }
 
   get hass() {
@@ -88,22 +97,15 @@ class PriceGraphCard extends LitElement {
   }
 
   _observedStatesChanged(previousStates, nextStates) {
-    const ids = new Set<string>();
-    if (this._config?.entity) ids.add(this._config.entity);
-    for (const item of normalizeContentItems(this._config?.content_items)) {
-      if (item.source === "entity" && item.entity) ids.add(item.entity);
+    return haveWatchedStatesChanged(previousStates, nextStates, this._getWatchedEntityIds());
+  }
+
+  _getWatchedEntityIds() {
+    if (this._watchedEntityIdsFor !== this._config) {
+      this._watchedEntityIds = getWatchedEntityIds(this._config);
+      this._watchedEntityIdsFor = this._config;
     }
-    for (const [item, defaultSource] of [
-      [this._config?.title_item_left, "title"],
-      [this._config?.title_item_right, "attribute"],
-    ]) {
-      const normalized = normalizeHeaderItem(item, defaultSource, "");
-      if (normalized.source === "entity" && normalized.entity) ids.add(normalized.entity);
-    }
-    for (const id of ids) {
-      if (previousStates?.[id] !== nextStates?.[id]) return true;
-    }
-    return false;
+    return this._watchedEntityIds;
   }
 
   static async getConfigElement() {
@@ -141,6 +143,7 @@ class PriceGraphCard extends LitElement {
     this._clockTimer = null;
     this._lastDayCtx = null;
     this._lastGraphSignature = null;
+    this._lastGraphHost = null;
   }
 
   getCardSize() {
@@ -424,14 +427,25 @@ class PriceGraphCard extends LitElement {
   _onHeaderClick() {
     if (this._holdFired) return;
     clearTimeout(this._tapTimer);
+    if (!this._hasActionConfig(this._getActionConfig("double_tap").action)) {
+      this._runAction("tap");
+      return;
+    }
     this._tapTimer = setTimeout(() => {
       this._runAction("tap");
-    }, 200);
+    }, DOUBLE_TAP_WINDOW_MS);
   }
 
   _onHeaderDblClick() {
+    if (!this._hasActionConfig(this._getActionConfig("double_tap").action)) return;
     clearTimeout(this._tapTimer);
     this._runAction("double_tap");
+  }
+
+  _onHeaderKeyDown(ev) {
+    if (!isActivationKey(ev)) return;
+    ev.preventDefault();
+    this._runAction("tap");
   }
 
   _onSlotPointerDown(item, ev) {
@@ -463,16 +477,28 @@ class PriceGraphCard extends LitElement {
     ev?.stopPropagation?.();
     if (this._slotHoldFired) return;
     clearTimeout(this._slotTapTimer);
+    if (!this._hasActionConfig(this._getSlotActionConfig(item, "double_tap").action)) {
+      this._runSlotAction(item, "tap");
+      return;
+    }
     this._slotTapTimer = setTimeout(() => {
       this._runSlotAction(item, "tap");
-    }, 200);
+    }, DOUBLE_TAP_WINDOW_MS);
   }
 
   _onSlotDblClick(item, ev) {
     if (!item?.actions?.enabled) return;
     ev?.stopPropagation?.();
+    if (!this._hasActionConfig(this._getSlotActionConfig(item, "double_tap").action)) return;
     clearTimeout(this._slotTapTimer);
     this._runSlotAction(item, "double_tap");
+  }
+
+  _onSlotKeyDown(item, ev) {
+    if (!item?.actions?.enabled || !isActivationKey(ev)) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    this._runSlotAction(item, "tap");
   }
 
   _onDayButtonPointerDown(ev) {

@@ -68,6 +68,9 @@ function resolveCssColor(el, color) {
 
 
 
+// Keyed by the theme's card background value, so switching themes still resolves a fresh color.
+const pastOverlayColorCache = new Map<string, string>();
+
 export function getTimelinePastOverlayColor(el) {
   if (!el) return "rgba(38, 14, 25, 0.6)";
   const cs = getComputedStyle(el);
@@ -76,12 +79,17 @@ export function getTimelinePastOverlayColor(el) {
   if (!base || base === "transparent" || base === "rgba(0, 0, 0, 0)") {
     base = getComputedStyle(document.documentElement).getPropertyValue("--card-background-color")?.trim() || "";
   }
-  const resolved = resolveCssColor(el, base || "#ffffff");
+  const key = base || "#ffffff";
+  const cached = pastOverlayColorCache.get(key);
+  if (cached) return cached;
+  const resolved = resolveCssColor(el, key);
   const rgb = parseRgbChannels(resolved);
   if (!rgb) return "rgba(38, 14, 25, 0.6)";
   const [r, g, b] = rgb.map((v) => v / 255);
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance < 0.5 ? "rgba(38, 14, 25, 0.6)" : "rgba(235, 238, 241, 0.7)";
+  const color = luminance < 0.5 ? "rgba(38, 14, 25, 0.6)" : "rgba(235, 238, 241, 0.7)";
+  pastOverlayColorCache.set(key, color);
+  return color;
 }
 
 

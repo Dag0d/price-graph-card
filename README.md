@@ -207,6 +207,7 @@ Supported slot action fields are:
 
 Source changes are made in `src/` and pushed to the Gitea `main` branch without a locally generated bundle.
 The generated `dist/price-graph-card.js` is maintained exclusively by the Gitea build workflow and should not be edited by hand.
+Local builds (`npm run build`, `npm run ci`) write to the ignored `build/` folder; only the workflows run `npm run build:release`, which writes `dist/`.
 
 The Gitea workflow sequence:
 

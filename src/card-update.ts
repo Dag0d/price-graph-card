@@ -2,15 +2,29 @@ import { appendSvgLineSegments, buildStepSegments, computeYScaleCt, getTimelineP
 import { escapeHtml, formatTickLabel, roundTo } from "./format";
 import { getLang, localize } from "./i18n";
 import { resolveRuntimeConfig } from "./runtime-config";
-import { formatHHMMInTimeZone, getHaTimeZone } from "./time";
+import { buildHourTicks, formatHHMMInTimeZone, getHaTimeZone } from "./time";
 import { getDisplayUnit } from "./units";
 
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
-export function getMappedPrice(priceMap: Map<number, number> | null, key: number) {
-  return priceMap?.get(key) ?? null;
+// The graph is drawn imperatively into the host; a new host (after a "no data" or "entity not found"
+// template) is empty even when the data signature did not change.
+export function canReuseGraph(signature: string | null, lastSignature: string | null, host: any, lastHost: any) {
+  return !!signature && signature === lastSignature && !!host && host === lastHost && !!host.firstChild;
+}
+
+// Overlay prices active within [from, to): the point running at `from` plus any point starting inside.
+// Around DST switches a slot can cover two squeezed overlay points.
+export function getOverlayPricesInRange(points: Array<{ start: Date; price: number }> | null, from: Date, to: Date, dayEnd: Date) {
+  const prices: number[] = [];
+  if (!points?.length) return prices;
+  for (let i = 0; i < points.length; i++) {
+    const end = points[i + 1]?.start || dayEnd;
+    if (points[i].start < to && end > from) prices.push(points[i].price);
+  }
+  return prices;
 }
 
 export function updateCard() {
@@ -41,11 +55,17 @@ export function updateCard() {
     }
     this._syncInfoLabelMarquee();
     this._syncInfoValueFit();
-    if (!wrap || !host || !tip) return;
+    if (!wrap || !host || !tip) {
+      this._lastGraphSignature = null;
+      return;
+    }
     this._syncResizeObserver(content, wrap, host);
 
     const st = this.hass.states?.[this._config.entity];
-    if (!st) return;
+    if (!st) {
+      this._lastGraphSignature = null;
+      return;
+    }
 
     const runtimeCfg = resolveRuntimeConfig(cfg, this._dayView);
     const dayCtx = this._getDayCtx(runtimeCfg, st, timeZone);
@@ -62,8 +82,9 @@ export function updateCard() {
     const pts = [...dayPoints].sort((a, b) => a.start - b.start);
     const unitLabel = getDisplayUnit(runtimeCfg, st.attributes, lang);
     const graphSignature = this._buildGraphSignature(runtimeCfg, st, dayCtx, host, wrap, lang, timeZone);
-    if (graphSignature && graphSignature === this._lastGraphSignature) return;
+    if (canReuseGraph(graphSignature, this._lastGraphSignature, host, this._lastGraphHost)) return;
     this._lastGraphSignature = graphSignature;
+    this._lastGraphHost = host;
 
     if (runtimeCfg.view_mode === "timeline") {
       this._unbindGraphPointer();
@@ -130,17 +151,17 @@ export function updateCard() {
         track.appendChild(marker);
       }
 
-      for (let hh = 0; hh <= dayHours; hh += 1) {
+      for (const { index, hour, repeated } of buildHourTicks(dayStart, dayHours, timeZone)) {
         const tick = document.createElement("div");
         tick.className = "tl-tick";
-        const isMajor = hh % 6 === 0 || hh === dayHours;
+        const isMajor = !repeated && (hour % 6 === 0 || index === dayHours);
         const dot = document.createElement("div");
         dot.className = `tl-dot ${isMajor ? "major" : ""}`.trim();
         tick.appendChild(dot);
         if (isMajor) {
           const label = document.createElement("div");
           label.className = "tl-hour";
-          label.textContent = formatHHMMInTimeZone(new Date(dayStart.getTime() + hh * 3600 * 1000), timeZone).slice(0, 2);
+          label.textContent = String(hour).padStart(2, "0");
           tick.appendChild(label);
         }
         scale.appendChild(tick);
@@ -193,10 +214,9 @@ export function updateCard() {
     });
 
     const xLabels = [];
-    for (let hh = 0; hh <= dayHours; hh += 2) {
-      const x = left + (hh / dayHours) * innerW;
-      const tickTime = new Date(dayStart.getTime() + hh * 3600 * 1000);
-      xLabels.push({ x, label: formatHHMMInTimeZone(tickTime, timeZone).slice(0, 2) });
+    for (const { index, hour, repeated } of buildHourTicks(dayStart, dayHours, timeZone)) {
+      if (repeated || hour % 2 !== 0) continue;
+      xLabels.push({ x: left + (index / dayHours) * innerW, label: String(hour).padStart(2, "0") });
     }
     const segments = buildStepSegments(runtimeCfg, dayPoints, dims, thresholds, dayStart, dayHours);
     const overlaySegments = overlayShifted
@@ -382,14 +402,7 @@ export function updateCard() {
       midpoints.push((a + b) / 2);
     }
 
-    let tomorrowMap = null;
-    if (dayView === "two_days" && twoDayMode === "overlay" && overlayShifted && overlayShifted.length) {
-      tomorrowMap = new Map();
-      for (const p of overlayShifted) {
-        const k = Math.round((p.start.getTime() - dayStart.getTime()) / 60000);
-        tomorrowMap.set(k, p.price);
-      }
-    }
+    const isOverlay = dayView === "two_days" && twoDayMode === "overlay" && !!overlayShifted?.length;
 
     const snapPoint = (t) => {
       if (!pts.length) return null;
@@ -434,24 +447,17 @@ export function updateCard() {
       const nextStart = pts[bestIdx + 1]?.start || dayEnd;
       const xSnap = (xFor(best.start) + xFor(nextStart)) / 2;
       const ySnap = yFor(best.price);
-      let yOverlay = null;
-      if (dayView === "two_days" && twoDayMode === "overlay" && overlayShifted && overlayShifted.length && tomorrowMap) {
-        const tKey = Math.round((best.start.getTime() - dayStart.getTime()) / 60000);
-        const ov = tomorrowMap.get(tKey);
-        if (ov !== undefined && ov !== null) {
-          yOverlay = yFor(ov);
-        }
-      }
-      showHover(xSnap, ySnap, yOverlay);
+      const overlayPrices = isOverlay ? getOverlayPricesInRange(overlayShifted, best.start, nextStart, dayEnd) : [];
+      showHover(xSnap, ySnap, overlayPrices.length ? yFor(overlayPrices[0]) : null);
 
-      if (dayView === "two_days" && twoDayMode === "overlay" && overlayShifted && overlayShifted.length) {
+      if (isOverlay) {
         const intervalMin = pts.length > 1 ? Math.round((pts[1].start.getTime() - pts[0].start.getTime()) / 60000) : 60;
         const nextStart = new Date(best.start.getTime() + intervalMin * 60000);
         const tLabel = `${formatHHMMInTimeZone(best.start, timeZone)}-${formatHHMMInTimeZone(nextStart, timeZone)}`;
-        const tKey = Math.round((best.start.getTime() - dayStart.getTime()) / 60000);
-        const tVal = getMappedPrice(tomorrowMap, tKey);
         const vToday = `${val} ${unitLabel}`;
-        const vTomorrow = tVal !== null ? `${roundTo(tVal, runtimeCfg.decimals)} ${unitLabel}` : "--";
+        const vTomorrow = overlayPrices.length
+          ? `${overlayPrices.map((v) => roundTo(v, runtimeCfg.decimals)).join(" / ")} ${unitLabel}`
+          : "--";
         tip.innerHTML = `<div><b>${escapeHtml(tLabel)}</b></div><div class="pg-sub">${localize("label_today", lang)}: ${escapeHtml(vToday)}</div><div class="pg-sub">${localize("label_tomorrow", lang)}: ${escapeHtml(vTomorrow)}</div>`;
       } else {
         const region = zoneLabel(best.price, thresholds, lang);

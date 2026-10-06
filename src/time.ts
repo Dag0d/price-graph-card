@@ -73,19 +73,54 @@ export function startOfDayInTimeZone(date: Date, timeZone: string) {
   return addDaysInTimeZone(date, 0, timeZone);
 }
 
-export function alignTimeToDayInTimeZone(sourceDate: Date, targetDay: Date, timeZone: string) {
-  const source = getDateTimePartsInTimeZone(sourceDate, timeZone);
-  const target = getDateTimePartsInTimeZone(targetDay, timeZone);
-  return zonedDateTimeToUtc(
-    target.year,
-    target.month,
-    target.day,
-    source.hour,
-    source.minute,
-    source.second,
-    sourceDate.getMilliseconds(),
-    timeZone,
-  );
+// Real timestamp of each full local clock hour of a day (0..24). Hours that do not exist (DST start)
+// are skipped, repeated hours (DST end) use their first occurrence.
+function getClockHourAnchors(dayStart: Date, timeZone: string) {
+  const d = getDateTimePartsInTimeZone(dayStart, timeZone);
+  const anchors = new Map<number, number>();
+  for (let h = 0; h < 24; h++) {
+    let t = zonedDateTimeToUtc(d.year, d.month, d.day, h, 0, 0, 0, timeZone);
+    const p = getDateTimePartsInTimeZone(t, timeZone);
+    if (p.day !== d.day || p.hour !== h || p.minute !== 0) continue;
+    const earlier = new Date(t.getTime() - 3_600_000);
+    const pe = getDateTimePartsInTimeZone(earlier, timeZone);
+    if (pe.day === d.day && pe.hour === h && pe.minute === 0) t = earlier;
+    anchors.set(h, t.getTime());
+  }
+  anchors.set(24, addDaysInTimeZone(dayStart, 1, timeZone).getTime());
+  return anchors;
+}
+
+// Maps points of one day onto the target day by local clock time. Between full hours that exist on
+// both days the mapping is linear, so around a DST switch a 23h day is stretched and a 25h day squeezed.
+export function alignPointsToDayByClock<T extends { start: Date }>(points: T[], targetDayStart: Date, timeZone: string): T[] {
+  if (!points.length) return [];
+  const source = getClockHourAnchors(startOfDayInTimeZone(points[0].start, timeZone), timeZone);
+  const target = getClockHourAnchors(targetDayStart, timeZone);
+  const pairs: Array<[number, number]> = [];
+  for (let h = 0; h <= 24; h++) {
+    if (source.has(h) && target.has(h)) pairs.push([source.get(h)!, target.get(h)!]);
+  }
+  let i = 0;
+  return points.map((p) => {
+    const t = p.start.getTime();
+    while (i < pairs.length - 2 && t >= pairs[i + 1][0]) i++;
+    const [s0, d0] = pairs[i];
+    const [s1, d1] = pairs[i + 1];
+    return { ...p, start: new Date(d0 + ((t - s0) * (d1 - d0)) / (s1 - s0)) };
+  });
+}
+
+// Local clock hour at each elapsed hour of the axis; a clock hour seen right before (DST end) is flagged.
+export function buildHourTicks(dayStart: Date, dayHours: number, timeZone: string) {
+  const ticks: Array<{ index: number; hour: number; repeated: boolean }> = [];
+  let previousHour: number | null = null;
+  for (let index = 0; index <= dayHours; index++) {
+    const hour = getDateTimePartsInTimeZone(new Date(dayStart.getTime() + index * 3_600_000), timeZone).hour;
+    ticks.push({ index, hour, repeated: hour === previousHour });
+    previousHour = hour;
+  }
+  return ticks;
 }
 
 export function formatHHMMInTimeZone(date: Date, timeZone: string) {

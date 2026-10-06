@@ -2,7 +2,6 @@ import { html, nothing } from "lit";
 import { DETAILED_COLOR_CONFIG, GEAR_ICON_PATH, SIMPLE_HIGH_COLOR, SIMPLE_LOW_COLOR, TIMELINE_CANVAS_HEIGHT } from "./const";
 import { normalizeContentItems, normalizeHeaderItem } from "./config";
 import { getContentItemValue } from "./card-content";
-import { CARD_CSS } from "./card-styles";
 import { formatDisplayValue, roundTo } from "./format";
 import { normalizeColor, zoneColor, zoneLabel } from "./graph";
 import { getLang, localize } from "./i18n";
@@ -196,6 +195,7 @@ export function renderCard() {
           @pointerleave=${(ev) => this._onSlotPointerLeave(data.item, ev)}
           @click=${(ev) => this._onSlotClick(data.item, ev)}
           @dblclick=${(ev) => this._onSlotDblClick(data.item, ev)}
+          @keydown=${(ev) => this._onSlotKeyDown(data.item, ev)}
         >
           <div class="info-value" style=${data.color ? `color:${data.color}` : ""}>
             <span class="info-value-inline">
@@ -225,7 +225,6 @@ export function renderCard() {
         ];
 
     return html`
-      <style>${CARD_CSS}</style>
       <ha-card>
         <div class="header"
           role="button"
@@ -235,6 +234,7 @@ export function renderCard() {
           @pointerleave=${this._onHeaderPointerLeave}
           @click=${this._onHeaderClick}
           @dblclick=${this._onHeaderDblClick}
+          @keydown=${this._onHeaderKeyDown}
         >
           ${renderHeaderItem(titleItemLeft, "header-item")}
           ${renderHeaderItem(titleItemRight, "header-item header-item-right")}
@@ -253,6 +253,7 @@ export function renderCard() {
             @pointerleave=${this._onHeaderPointerLeave}
             @click=${this._onHeaderClick}
             @dblclick=${this._onHeaderDblClick}
+          @keydown=${this._onHeaderKeyDown}
           >
             <div class="pg-tooltip" id="pg-tooltip"></div>
             <div id="pg-svg-host" style="height:${plotHeight}px"></div>

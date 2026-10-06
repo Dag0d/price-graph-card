@@ -778,8 +778,27 @@ function Ze(e) {
 	return !Object.keys(n).some((e) => e !== "source") && t.source === "attribute" ? { source: "attribute" } : n;
 }
 //#endregion
+//#region src/hass-updates.ts
+function Qe(e) {
+	let t = /* @__PURE__ */ new Set();
+	e?.entity && t.add(e.entity);
+	for (let n of W(e?.content_items)) n.source === "entity" && n.entity && t.add(n.entity);
+	for (let [n, r] of [[e?.title_item_left, "title"], [e?.title_item_right, "attribute"]]) {
+		let e = G(n, r, "");
+		e.source === "entity" && e.entity && t.add(e.entity);
+	}
+	return [...t];
+}
+function $e(e, t, n) {
+	for (let r of n) if (e?.[r] !== t?.[r]) return !0;
+	return !1;
+}
+function et(e, t, n) {
+	return !e || !t ? e !== t : e.language !== t.language || e.locale !== t.locale || e.config?.time_zone !== t.config?.time_zone || e.themes !== t.themes || e.formatEntityState !== t.formatEntityState || $e(e.states, t.states, n);
+}
+//#endregion
 //#region src/i18n.ts
-var Qe = Object.freeze({
+var tt = Object.freeze({
 	de: {
 		waiting_ha: "Warte auf Home Assistant…",
 		entity_not_found: "Entity nicht gefunden",
@@ -1068,21 +1087,21 @@ var Qe = Object.freeze({
 		content_items_position_top: "Top (above graph/timeline)",
 		content_items_position_bottom: "Bottom (below day buttons)"
 	}
-}), K = /* @__PURE__ */ new Map(), $e = /* @__PURE__ */ new Map();
-function et(e) {
+}), K = /* @__PURE__ */ new Map(), nt = /* @__PURE__ */ new Map();
+function rt(e) {
 	let t = String(e || "en").trim().toLowerCase();
 	return t && t.split("-")[0] || "en";
 }
-async function tt(e) {
-	let t = et(e);
+async function it(e) {
+	let t = rt(e);
 	if (K.has(t)) return K.get(t);
-	if ($e.has(t)) return $e.get(t);
+	if (nt.has(t)) return nt.get(t);
 	let n = (async () => {
 		try {
-			let e = Qe[t];
+			let e = tt[t];
 			if (!e) {
 				if (t !== "en") {
-					let e = await tt("en");
+					let e = await it("en");
 					return K.set(t, e || {}), e;
 				}
 				return K.set(t, {}), K.get(t);
@@ -1090,57 +1109,57 @@ async function tt(e) {
 			K.set(t, e && typeof e == "object" ? e : {});
 		} catch {
 			if (t !== "en") {
-				let e = await tt("en");
+				let e = await it("en");
 				return K.set(t, e || {}), e;
 			}
 			K.set(t, {});
 		} finally {
-			$e.delete(t);
+			nt.delete(t);
 		}
 		return K.get(t);
 	})();
-	return $e.set(t, n), n;
+	return nt.set(t, n), n;
 }
 function q(e, t, n = {}) {
-	let r = et(t), i = (K.get(r) || {})?.[e] || e;
+	let r = rt(t), i = (K.get(r) || {})?.[e] || e;
 	if (!n) return i;
 	for (let e in n) Object.prototype.hasOwnProperty.call(n, e) && (i = i.replace(`{${e}}`, n[e]));
 	return i;
 }
-function J(e) {
-	return et(e?.locale?.language || e?.language || "en");
+function at(e) {
+	return rt(e?.locale?.language || e?.language || "en");
 }
 //#endregion
 //#region src/format.ts
-function Y(e, t = 1) {
+function J(e, t = 1) {
 	let n = 10 ** t;
 	return Math.round(e * n) / n;
 }
-function nt(e, t) {
+function ot(e, t) {
 	if (e == null || typeof e == "string" && !e.trim()) return "—";
 	if (typeof e == "boolean") return String(e);
-	if (typeof e == "number" && Number.isFinite(e)) return Y(e, t).toString();
+	if (typeof e == "number" && Number.isFinite(e)) return J(e, t).toString();
 	let n = Number(e);
-	return Number.isFinite(n) ? Y(n, t).toString() : String(e);
+	return Number.isFinite(n) ? J(n, t).toString() : String(e);
 }
-function rt(e) {
-	let t = Y(e, 3);
+function st(e) {
+	let t = J(e, 3);
 	return Number(t.toFixed(3)).toString();
 }
-function it(e) {
+function ct(e) {
 	return String(e).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 //#endregion
 //#region src/time.ts
-function at(e) {
+function lt(e) {
 	return new Date(e.getFullYear(), e.getMonth(), e.getDate(), 0, 0, 0, 0);
 }
-function ot(e) {
+function ut(e) {
 	return String(e).padStart(2, "0");
 }
-var st = /* @__PURE__ */ new Map();
-function ct(e) {
-	let t = e || "UTC", n = st.get(t);
+var dt = /* @__PURE__ */ new Map();
+function ft(e) {
+	let t = e || "UTC", n = dt.get(t);
 	return n || (n = new Intl.DateTimeFormat("en-GB", {
 		timeZone: t,
 		year: "numeric",
@@ -1151,41 +1170,74 @@ function ct(e) {
 		second: "2-digit",
 		hour12: !1,
 		hourCycle: "h23"
-	}), st.set(t, n)), n;
+	}), dt.set(t, n)), n;
 }
-function lt(e, t) {
-	let n = ct(t).formatToParts(e), r = {};
+function pt(e, t) {
+	let n = ft(t).formatToParts(e), r = {};
 	for (let e of n) e.type === "year" ? r.year = Number(e.value) : e.type === "month" ? r.month = Number(e.value) : e.type === "day" ? r.day = Number(e.value) : e.type === "hour" ? r.hour = Number(e.value) : e.type === "minute" ? r.minute = Number(e.value) : e.type === "second" && (r.second = Number(e.value));
 	return r;
 }
-function ut(e, t, n, r, i, a, o, s) {
+function mt(e, t, n, r, i, a, o, s) {
 	let c = Date.UTC(e, t - 1, n, r, i, a, 0), l = c;
 	for (let e = 0; e < 4; e++) {
-		let e = lt(new Date(l), s), t = c - Date.UTC(e.year, e.month - 1, e.day, e.hour, e.minute, e.second, 0);
+		let e = pt(new Date(l), s), t = c - Date.UTC(e.year, e.month - 1, e.day, e.hour, e.minute, e.second, 0);
 		if (!t) break;
 		l += t;
 	}
 	return new Date(l + (o || 0));
 }
-function dt(e, t, n) {
-	let r = lt(e, n);
-	return ut(r.year, r.month, r.day + t, 0, 0, 0, 0, n);
+function Y(e, t, n) {
+	let r = pt(e, n);
+	return mt(r.year, r.month, r.day + t, 0, 0, 0, 0, n);
 }
-function ft(e, t) {
-	return dt(e, 0, t);
+function ht(e, t) {
+	return Y(e, 0, t);
 }
-function pt(e, t, n) {
-	let r = lt(e, n), i = lt(t, n);
-	return ut(i.year, i.month, i.day, r.hour, r.minute, r.second, e.getMilliseconds(), n);
+function gt(e, t) {
+	let n = pt(e, t), r = /* @__PURE__ */ new Map();
+	for (let e = 0; e < 24; e++) {
+		let i = mt(n.year, n.month, n.day, e, 0, 0, 0, t), a = pt(i, t);
+		if (a.day !== n.day || a.hour !== e || a.minute !== 0) continue;
+		let o = /* @__PURE__ */ new Date(i.getTime() - 36e5), s = pt(o, t);
+		s.day === n.day && s.hour === e && s.minute === 0 && (i = o), r.set(e, i.getTime());
+	}
+	return r.set(24, Y(e, 1, t).getTime()), r;
 }
-function mt(e, t) {
-	let n = lt(e, t);
-	return `${ot(n.hour)}:${ot(n.minute)}`;
+function _t(e, t, n) {
+	if (!e.length) return [];
+	let r = gt(ht(e[0].start, n), n), i = gt(t, n), a = [];
+	for (let e = 0; e <= 24; e++) r.has(e) && i.has(e) && a.push([r.get(e), i.get(e)]);
+	let o = 0;
+	return e.map((e) => {
+		let t = e.start.getTime();
+		for (; o < a.length - 2 && t >= a[o + 1][0];) o++;
+		let [n, r] = a[o], [i, s] = a[o + 1];
+		return {
+			...e,
+			start: new Date(r + (t - n) * (s - r) / (i - n))
+		};
+	});
 }
-function ht(e = Date.now()) {
+function vt(e, t, n) {
+	let r = [], i = null;
+	for (let a = 0; a <= t; a++) {
+		let t = pt(new Date(e.getTime() + a * 36e5), n).hour;
+		r.push({
+			index: a,
+			hour: t,
+			repeated: t === i
+		}), i = t;
+	}
+	return r;
+}
+function yt(e, t) {
+	let n = pt(e, t);
+	return `${ut(n.hour)}:${ut(n.minute)}`;
+}
+function bt(e = Date.now()) {
 	return 6e4 - e % 6e4 + 25;
 }
-function gt(e) {
+function xt(e) {
 	return e?.config?.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 //#endregion
@@ -1195,18 +1247,18 @@ function X(e) {
 	let t = Number(e);
 	return Number.isFinite(t) ? t : null;
 }
-function _t(e, t) {
+function St(e, t) {
 	return X(e?.[t]);
 }
-function vt(e) {
+function Ct(e) {
 	return e.length ? e.reduce((e, t) => e + t, 0) / e.length : null;
 }
-function yt(e, t) {
+function wt(e, t) {
 	if (!e.length) return null;
 	let n = (e.length - 1) * t, r = Math.floor(n), i = n - r;
 	return e[r + 1] === void 0 ? e[r] : e[r] + i * (e[r + 1] - e[r]);
 }
-function bt(e) {
+function Tt(e) {
 	if (!e || typeof e != "object") return [];
 	let t = e.data;
 	if (!Array.isArray(t) || !t.length) return [];
@@ -1214,7 +1266,7 @@ function bt(e) {
 	for (let e of t) {
 		if (!e || typeof e != "object") continue;
 		let t = new Date(e.start_time), r = X(e.price_per_kwh);
-		!Number.isFinite(t.getTime()) || r === null || n.push({
+		Number.isFinite(t.getTime()) && r !== null && n.push({
 			start: t,
 			price: r
 		});
@@ -1222,7 +1274,7 @@ function bt(e) {
 	return n.sort((e, t) => e.start.getTime() - t.start.getTime()), n;
 }
 function Z(e, t = /* @__PURE__ */ new Date(), n = 0, r = "UTC") {
-	let i = dt(t, n, r), a = dt(t, n + 1, r);
+	let i = Y(t, n, r), a = Y(t, n + 1, r);
 	return e.filter((e) => e.start >= i && e.start < a);
 }
 //#endregion
@@ -1230,7 +1282,7 @@ function Z(e, t = /* @__PURE__ */ new Date(), n = 0, r = "UTC") {
 function Q(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-function xt(e, t = "#ffffff") {
+function Et(e, t = "#ffffff") {
 	if (typeof e == "string" && e.trim()) return e.trim();
 	if (Array.isArray(e) && e.length >= 3) {
 		let t = X(e[0]), n = X(e[1]), r = X(e[2]);
@@ -1242,7 +1294,7 @@ function xt(e, t = "#ffffff") {
 	}
 	return t;
 }
-function St(e, t = "#ffffff") {
+function Dt(e, t = "#ffffff") {
 	if (!e) return t;
 	let n = String(e).trim();
 	if (n.startsWith("#") || (n = `#${n}`), /^#([0-9a-f]{3})$/i.test(n)) {
@@ -1251,7 +1303,7 @@ function St(e, t = "#ffffff") {
 	}
 	return /^#([0-9a-f]{6})$/i.test(n) ? n.toLowerCase() : t;
 }
-function Ct(e) {
+function Ot(e) {
 	if (typeof e != "string") return null;
 	let t = e.trim().match(/^rgba?\(([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
 	return t ? [
@@ -1260,40 +1312,43 @@ function Ct(e) {
 		Q(Number(t[3]), 0, 255)
 	] : null;
 }
-function wt(e, t) {
+function kt(e, t) {
 	if (!e || !t) return "";
 	let n = document.createElement("span");
 	n.style.display = "none", n.style.color = t, e.appendChild(n);
 	let r = getComputedStyle(n).color || "";
 	return n.remove(), r;
 }
-function Tt(e) {
+var At = /* @__PURE__ */ new Map();
+function jt(e) {
 	if (!e) return "rgba(38, 14, 25, 0.6)";
 	let t = getComputedStyle(e), n = t.getPropertyValue("--card-background-color")?.trim() || "";
 	n ||= t.backgroundColor || "", (!n || n === "transparent" || n === "rgba(0, 0, 0, 0)") && (n = getComputedStyle(document.documentElement).getPropertyValue("--card-background-color")?.trim() || "");
-	let r = Ct(wt(e, n || "#ffffff"));
-	if (!r) return "rgba(38, 14, 25, 0.6)";
-	let [i, a, o] = r.map((e) => e / 255);
-	return .2126 * i + .7152 * a + .0722 * o < .5 ? "rgba(38, 14, 25, 0.6)" : "rgba(235, 238, 241, 0.7)";
+	let r = n || "#ffffff", i = At.get(r);
+	if (i) return i;
+	let a = Ot(kt(e, r));
+	if (!a) return "rgba(38, 14, 25, 0.6)";
+	let [o, s, c] = a.map((e) => e / 255), l = .2126 * o + .7152 * s + .0722 * c < .5 ? "rgba(38, 14, 25, 0.6)" : "rgba(235, 238, 241, 0.7)";
+	return At.set(r, l), l;
 }
-function Et(e, t = !1) {
+function Mt(e, t = !1) {
 	let n = String(e || "");
 	return t ? Ne.includes(n) ? n : n === "above_avg" ? "expensive" : "cheap" : Me.includes(n) ? n : n === "expensive" || n === "very_expensive" ? "above_avg" : "below_avg";
 }
-function Dt(e, t, n = !!t?.detailed) {
+function Nt(e, t, n = !!t?.detailed) {
 	return !t || !Number.isFinite(e) || !Number.isFinite(t.avg) ? "" : n ? t?.fixed !== null && t?.fixed !== void 0 && e >= t.fixed ? "very_expensive" : e <= t.p20 ? "cheap" : e <= t.avg ? "normal" : e <= t.p70 ? "expensive" : "very_expensive" : e <= t.avg ? "below_avg" : "above_avg";
 }
-function Ot(e, t, n) {
-	let r = Dt(t, n, !!e?.detailed_colors);
+function Pt(e, t, n) {
+	let r = Nt(t, n, !!e?.detailed_colors);
 	if (!e?.detailed_colors) return r === "below_avg" ? we : Te;
-	let i = xt(e.color_cheap, "#CDDC39"), a = xt(e.color_normal, "#FF9800"), o = xt(e.color_expensive, "#F44336"), s = xt(e.color_very_expensive, "#B71C1C");
+	let i = Et(e.color_cheap, "#CDDC39"), a = Et(e.color_normal, "#FF9800"), o = Et(e.color_expensive, "#F44336"), s = Et(e.color_very_expensive, "#B71C1C");
 	return r === "cheap" ? i : r === "normal" ? a : r === "expensive" ? o : s;
 }
-function kt(e, t, n) {
-	let r = Dt(e, t);
+function Ft(e, t, n) {
+	let r = Nt(e, t);
 	return r ? q(`region_${r}`, n) : "";
 }
-function At(e, t) {
+function It(e, t) {
 	if (!t) return [];
 	if (!t.detailed) return [t.avg].filter((e) => Number.isFinite(e));
 	let n = [
@@ -1303,10 +1358,10 @@ function At(e, t) {
 	];
 	return t.fixed !== null && t.fixed !== void 0 && n.push(t.fixed), n.filter((e) => Number.isFinite(e));
 }
-function jt(e) {
+function Lt(e) {
 	return (Pe.find(([t]) => e <= t) ?? [null, 20])[1];
 }
-function Mt(e, t) {
+function Rt(e, t) {
 	if (!e.length) return {
 		yMin: 0,
 		yMax: 10,
@@ -1323,7 +1378,7 @@ function Mt(e, t) {
 	for (let t of e) n = Math.min(n, t.price), r = Math.max(r, t.price);
 	let i = r - n;
 	i <= 0 && (i = t === "currency" ? .04 : 4);
-	let a = jt(i), o = Q(i * .08, a * .5, a * 1), s = n - o, c = r + o;
+	let a = Lt(i), o = Q(i * .08, a * .5, a * 1), s = n - o, c = r + o;
 	c <= s && (c = s + a * 4), s = Math.floor(s / a) * a, c = Math.ceil(c / a) * a;
 	let l = [];
 	for (let e = s; e <= c + 1e-9; e += a) l.push(e);
@@ -1333,13 +1388,13 @@ function Mt(e, t) {
 		ticks: l
 	};
 }
-function Nt(e, t, n, r, i, a = 24, o = null) {
-	let { left: s, top: c, innerW: l, innerH: u, yMin: d, yMax: f } = n, p = i || at(/* @__PURE__ */ new Date()), m = new Date(p.getTime() + a * 3600 * 1e3), h = Pt(p, a, s, l), g = Ft(c, u, d, f), _ = [...t].sort((e, t) => e.start - t.start), v = [];
+function zt(e, t, n, r, i, a = 24, o = null) {
+	let { left: s, top: c, innerW: l, innerH: u, yMin: d, yMax: f } = n, p = i || lt(/* @__PURE__ */ new Date()), m = new Date(p.getTime() + a * 3600 * 1e3), h = Bt(p, a, s, l), g = Vt(c, u, d, f), _ = [...t].sort((e, t) => e.start - t.start), v = [];
 	for (let t = 0; t < _.length; t++) {
 		let n = _[t], i = _[t + 1] || {
 			start: m,
 			price: n.price
-		}, a = h(n.start), s = h(i.start), c = g(n.price), l = o ? o(n.price) : Ot(e, n.price, r);
+		}, a = h(n.start), s = h(i.start), c = g(n.price), l = o ? o(n.price) : Pt(e, n.price, r);
 		if (v.push({
 			x1: a,
 			y1: c,
@@ -1358,7 +1413,7 @@ function Nt(e, t, n, r, i, a = 24, o = null) {
 				width: 2
 			});
 			else {
-				let t = Math.min(a, u), n = Math.max(a, u), i = At(e, r).filter((e) => e > t && e < n).sort((e, t) => e - t), c = a < u ? [
+				let t = Math.min(a, u), n = Math.max(a, u), i = It(e, r).filter((e) => e > t && e < n).sort((e, t) => e - t), c = a < u ? [
 					a,
 					...i,
 					u
@@ -1368,7 +1423,7 @@ function Nt(e, t, n, r, i, a = 24, o = null) {
 					u
 				];
 				for (let t = 0; t < c.length - 1; t++) {
-					let n = c[t], i = c[t + 1], a = (n + i) / 2, l = o ? o(a) : Ot(e, a, r);
+					let n = c[t], i = c[t + 1], a = (n + i) / 2, l = o ? o(a) : Pt(e, a, r);
 					v.push({
 						x1: s,
 						y1: g(n),
@@ -1383,14 +1438,14 @@ function Nt(e, t, n, r, i, a = 24, o = null) {
 	}
 	return v;
 }
-function Pt(e, t, n, r) {
+function Bt(e, t, n, r) {
 	let i = new Date(e.getTime() + t * 3600 * 1e3);
 	return (t) => n + (Q(t.getTime(), e.getTime(), i.getTime()) - e.getTime()) / (i.getTime() - e.getTime()) * r;
 }
-function Ft(e, t, n, r) {
+function Vt(e, t, n, r) {
 	return (i) => e + (1 - Q((i - n) / (r - n || 1), 0, 1)) * t;
 }
-function It(e, t, n) {
+function Ht(e, t, n) {
 	for (let r of n) {
 		let n = document.createElementNS(t, "line");
 		n.setAttribute("stroke-linecap", r.cap || "square"), n.setAttribute("stroke-linejoin", r.join || "miter"), n.setAttribute("x1", r.x1), n.setAttribute("y1", r.y1), n.setAttribute("x2", r.x2), n.setAttribute("y2", r.y2), n.setAttribute("stroke", r.stroke), n.setAttribute("stroke-width", r.width), e.appendChild(n);
@@ -1398,50 +1453,54 @@ function It(e, t, n) {
 }
 //#endregion
 //#region src/units.ts
-function Lt(e, t) {
+function Ut(e, t) {
 	let n = String(e || "").trim();
 	return n ? t === "value_only" ? n.replace(/\/\s*kwh$/i, "").trim() : n : "";
 }
-function Rt(e) {
+function Wt(e) {
 	return String(e || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function zt(e) {
+var Gt = /* @__PURE__ */ new Map();
+function Kt(e) {
 	let t = String(e || "").trim().toUpperCase();
 	if (!/^[A-Z]{3}$/.test(t)) return [];
-	let n = /* @__PURE__ */ new Set();
+	let n = Gt.get(t);
+	if (n) return n;
+	let r = /* @__PURE__ */ new Set();
 	for (let e of ["symbol", "narrowSymbol"]) try {
-		let r = new Intl.NumberFormat(void 0, {
+		let n = new Intl.NumberFormat(void 0, {
 			style: "currency",
 			currency: t,
 			currencyDisplay: e
 		}).formatToParts(1).find((e) => e.type === "currency")?.value;
-		r && r !== t && n.add(r.trim());
+		n && n !== t && r.add(n.trim());
 	} catch {}
-	return [...n];
+	let i = [...r];
+	return Gt.set(t, i), i;
 }
-function Bt(e, t) {
+function qt(e, t) {
 	let n = [
 		String(e?.attributes?.unit_of_measurement || "").trim(),
 		t,
 		String(e?.attributes?.currency || "").trim()
 	].filter(Boolean), r = new Set(n);
-	for (let e of n) for (let t of zt(e)) r.add(t);
+	for (let e of n) for (let t of Kt(e)) r.add(t);
 	return [...r].sort((e, t) => t.length - e.length);
 }
-function Vt(e, t) {
+function Jt(e, t) {
 	let n = String(e ?? "").replace(/\u00A0/g, " ").trim();
 	for (let e of t) {
 		if (!e) continue;
-		let t = Rt(e);
+		let t = Wt(e);
 		n = n.replace(RegExp(`^\\s*${t}\\s*`, "i"), "").trim(), n = n.replace(RegExp(`\\s*${t}\\s*$`, "i"), "").trim();
 	}
 	return n;
 }
-function Ht(e, t) {
+function Yt(e, t) {
 	let n = String(e ?? "").replace(/\u00A0/g, " ").trim();
 	for (let e of t) {
 		if (!e) continue;
-		let t = Rt(e), r = n.match(RegExp(`^(.*?)\\s*(${t})\\s*$`, "i"));
+		let t = Wt(e), r = n.match(RegExp(`^(.*?)\\s*(${t})\\s*$`, "i"));
 		if (r?.[1]?.trim()) return {
 			value: r[1].trim(),
 			unit: r[2].trim()
@@ -1457,7 +1516,7 @@ function Ht(e, t) {
 		unit: ""
 	};
 }
-function Ut(e) {
+function Xt(e) {
 	let t = String(e || "").replace(/\s+/g, "");
 	if (!t) return "";
 	let n = t.match(/^([A-Z]{3})\/kWh$/i);
@@ -1476,23 +1535,23 @@ function Ut(e) {
 	].find(([e]) => r === e);
 	return i ? i[1] : "";
 }
-function Wt(e) {
+function Zt(e) {
 	let t = e?.currency && String(e.currency).trim() || "";
-	return t ? t.toUpperCase() : Ut(e?.unit_of_measurement);
+	return t ? t.toUpperCase() : Xt(e?.unit_of_measurement);
 }
-function Gt(e) {
+function Qt(e) {
 	return Oe.has(e);
 }
-function Kt(e, t) {
-	return e.currency_override && e.currency_override !== "auto" ? e.currency_override === "custom" ? String(e.currency_custom || "").trim().toUpperCase() : String(e.currency_override).trim().toUpperCase() : Wt(t);
+function $t(e, t) {
+	return e.currency_override && e.currency_override !== "auto" ? e.currency_override === "custom" ? String(e.currency_custom || "").trim().toUpperCase() : String(e.currency_override).trim().toUpperCase() : Zt(t);
 }
-function qt(e, t) {
+function en(e, t) {
 	if (e.unit_format !== "minor") return 1;
-	if (t && Gt(t)) return 100;
+	if (t && Qt(t)) return 100;
 	let n = X(e.unit_factor);
 	return n && n > 0 ? n : 100;
 }
-function Jt(e, t) {
+function tn(e, t) {
 	return !e.length || t === 1 ? {
 		points: e,
 		scaled: !1,
@@ -1506,36 +1565,36 @@ function Jt(e, t) {
 		factor: t
 	};
 }
-function Yt(e, t, n) {
+function nn(e, t, n) {
 	if (e.currency_override === "custom") return e.minor_label || q("unit_minor", n);
-	if (t && Gt(t)) {
+	if (t && Qt(t)) {
 		let e = q(`minor_${t}`, n);
 		return e && !e.startsWith("minor_") ? e : "";
 	}
 	return "";
 }
-function Xt(e, t, n) {
-	let r = Kt(e, t);
+function rn(e, t, n) {
+	let r = $t(e, t);
 	if (e.unit_format === "minor") {
-		let t = Yt(e, r, n);
+		let t = nn(e, r, n);
 		return t ? `${t}/kWh` : "minor/kWh";
 	}
 	return r ? `${r}/kWh` : "";
 }
 //#endregion
 //#region src/pricing.ts
-function Zt(e, t, n) {
+function an(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-function Qt(e, t) {
+function on(e, t) {
 	let n = Ue(e);
-	return n === "selected" ? fn(t) : n;
+	return n === "selected" ? yn(t) : n;
 }
-function $t(e, t, n = "today") {
-	let r = Qt(e, n);
+function sn(e, t, n = "today") {
+	let r = on(e, n);
 	return q(r === "tomorrow" ? "label_tomorrow" : r === "two_days" ? "label_two_days" : "label_today", t);
 }
-function en(e) {
+function cn(e) {
 	if (!Array.isArray(e) || e.length < 2) return null;
 	let t = null;
 	for (let n = 1; n < e.length; n++) {
@@ -1546,17 +1605,17 @@ function en(e) {
 	}
 	return t === 15 || t === 60 ? t : null;
 }
-function tn(e, t) {
+function ln(e, t) {
 	let n = e[t];
 	if (!n) return 9e5;
 	let r = t > 0 ? n.start.getTime() - e[t - 1].start.getTime() : null, i = e[t + 1] ? e[t + 1].start.getTime() - n.start.getTime() : null;
 	return r > 0 && i > 0 ? i > r * 1.5 ? r : i : i > 0 ? i : r > 0 ? r : 9e5;
 }
-function nn(e, t = 1, n = "UTC", r = /* @__PURE__ */ new Date()) {
+function un(e, t = 1, n = "UTC", r = /* @__PURE__ */ new Date()) {
 	if (!Array.isArray(e) || !e.length) return !1;
-	let i = en(e);
+	let i = cn(e);
 	if (!i) return !1;
-	let a = dt(r, t, n), o = dt(r, t + 1, n), s = Math.round((o.getTime() - a.getTime()) / (i * 6e4));
+	let a = Y(r, t, n), o = Y(r, t + 1, n), s = Math.round((o.getTime() - a.getTime()) / (i * 6e4));
 	if (s <= 0 || e.length !== s) return !1;
 	for (let t = 0; t < e.length; t++) {
 		let n = a.getTime() + t * i * 6e4;
@@ -1564,48 +1623,48 @@ function nn(e, t = 1, n = "UTC", r = /* @__PURE__ */ new Date()) {
 	}
 	return !0;
 }
-function rn(e) {
+function dn(e) {
 	return !!e && Object.prototype.hasOwnProperty.call(e, "tomorrow_status");
 }
-function an(e, t = null, n = "UTC") {
-	if (rn(e)) {
+function fn(e, t = null, n = "UTC") {
+	if (dn(e)) {
 		let t = String(e?.tomorrow_status || "").toLowerCase();
 		return t === "ok" || t === "preview";
 	}
-	return nn(Z(Array.isArray(t) ? t : bt(e), /* @__PURE__ */ new Date(), 1, n), 1, n);
+	return un(Z(Array.isArray(t) ? t : Tt(e), /* @__PURE__ */ new Date(), 1, n), 1, n);
 }
-function on(e, t, n = "UTC") {
-	let r = bt(e);
+function pn(e, t, n = "UTC") {
+	let r = Tt(e);
 	if (t === "today") return Z(r, /* @__PURE__ */ new Date(), 0, n);
 	if (t === "tomorrow") return Z(r, /* @__PURE__ */ new Date(), 1, n);
 	let i = Z(r, /* @__PURE__ */ new Date(), 0, n), a = Z(r, /* @__PURE__ */ new Date(), 1, n);
 	return [...i, ...a];
 }
-function sn(e, t, n, r = "today", i = "range", a = "today", o = !0, s = "per_kwh", c = "UTC") {
-	let l = Qt(r, a);
-	if ((l === "tomorrow" || l === "two_days") && !an(t, null, c)) return q("price_range_unavailable", n);
-	let u = l === "today" ? "today" : l === "tomorrow" ? "tomorrow" : "today_tomorrow", d = qt(e, Kt(e, t)), f = Lt(Xt(e, t, n), s), p = () => Jt(on(t, l, c), d).points;
+function mn(e, t, n, r = "today", i = "range", a = "today", o = !0, s = "per_kwh", c = "UTC") {
+	let l = on(r, a);
+	if ((l === "tomorrow" || l === "two_days") && !fn(t, null, c)) return q("price_range_unavailable", n);
+	let u = l === "today" ? "today" : l === "tomorrow" ? "tomorrow" : "today_tomorrow", d = en(e, $t(e, t)), f = Ut(rn(e, t, n), s), p = () => tn(pn(t, l, c), d).points;
 	if (i === "avg") {
-		let r = _t(t, `avg_${u}`);
+		let r = St(t, `avg_${u}`);
 		if (r === null) {
-			if (r = vt(p().map((e) => e.price).filter((e) => Number.isFinite(e))), r === null) return q("price_range_unavailable", n);
+			if (r = Ct(p().map((e) => e.price).filter((e) => Number.isFinite(e))), r === null) return q("price_range_unavailable", n);
 		} else r *= d;
-		return `${nt(r, e.decimals)}${o && f ? ` ${f}` : ""}`;
+		return `${ot(r, e.decimals)}${o && f ? ` ${f}` : ""}`;
 	}
-	let m = _t(t, `min_${u}`), h = _t(t, `max_${u}`);
+	let m = St(t, `min_${u}`), h = St(t, `max_${u}`);
 	if (m !== null && (m *= d), h !== null && (h *= d), m === null || h === null) {
 		let e = p().map((e) => e.price).filter((e) => Number.isFinite(e));
 		if (!e.length) return q("price_range_unavailable", n);
 		m === null && (m = Math.min(...e)), h === null && (h = Math.max(...e));
 	}
-	return h < m && ([m, h] = [h, m]), `${nt(m, e.decimals)} - ${nt(h, e.decimals)}${o && f ? ` ${f}` : ""}`;
+	return h < m && ([m, h] = [h, m]), `${ot(m, e.decimals)} - ${ot(h, e.decimals)}${o && f ? ` ${f}` : ""}`;
 }
-function cn(e, t, n, r, i) {
-	let a = i === "today_tomorrow" ? "_today_tomorrow" : i === "tomorrow" ? "_tomorrow" : "_today", o = _t(t, `p20${a}`), s = _t(t, `avg${a}`), c = _t(t, `p70${a}`);
+function hn(e, t, n, r, i) {
+	let a = i === "today_tomorrow" ? "_today_tomorrow" : i === "tomorrow" ? "_tomorrow" : "_today", o = St(t, `p20${a}`), s = St(t, `avg${a}`), c = St(t, `p70${a}`);
 	if (r !== 1 && (o !== null && (o *= r), s !== null && (s *= r), c !== null && (c *= r)), o === null || s === null || c === null) {
 		let e = (n || []).map((e) => e.price).filter((e) => typeof e == "number" && Number.isFinite(e)).slice();
 		e.sort((e, t) => e - t);
-		let t = yt(e, .2), r = vt(e), i = yt(e, .7);
+		let t = wt(e, .2), r = Ct(e), i = wt(e, .7);
 		o === null && (o = t), s === null && (s = r), c === null && (c = i);
 	}
 	if (o === null && s === null && c === null) return {
@@ -1613,65 +1672,62 @@ function cn(e, t, n, r, i) {
 		avg: 0,
 		p70: 0
 	};
-	let l = dn(e, "use_fixed_p20", "fixed_p20_value", r), u = dn(e, "use_fixed_avg", "fixed_avg_value", r), d = dn(e, "use_fixed_expensive", "fixed_expensive_value", r);
+	let l = vn(e, "use_fixed_p20", "fixed_p20_value", r), u = vn(e, "use_fixed_avg", "fixed_avg_value", r), d = vn(e, "use_fixed_expensive", "fixed_expensive_value", r);
 	l !== null && (o = l), u !== null && (s = u), d !== null && (c = d);
 	let f = Math.min(o ?? s ?? c, s ?? o ?? c, c ?? s ?? o), p = Math.max(o ?? s ?? c, s ?? o ?? c, c ?? s ?? o);
 	return {
 		p20: f,
-		avg: Zt(s ?? f, f, p),
+		avg: an(s ?? f, f, p),
 		p70: p,
 		fixed: null,
 		detailed: !!e.detailed_colors
 	};
 }
-function ln(e, t, n, r, i, a = "UTC", o = /* @__PURE__ */ new Date()) {
-	let s = !!e?.detailed_colors, c = Et(r, s), l = qt(e, Kt(e, t));
+function gn(e, t, n, r, i, a = "UTC", o = /* @__PURE__ */ new Date()) {
+	let s = !!e?.detailed_colors, c = Mt(r, s), l = en(e, $t(e, t));
 	for (let r of [0, 1]) {
-		let u = r === 0 ? "today" : "tomorrow", d = Jt(Z(n, o, r, a), l).points;
+		let u = r === 0 ? "today" : "tomorrow", d = tn(Z(n, o, r, a), l).points;
 		if (!d.length) continue;
-		let f = cn(e, t, d, l, u);
+		let f = hn(e, t, d, l, u);
 		for (let e = 0; e < d.length; e++) {
 			let t = d[e];
-			if (Dt(t.price, f, s) !== c) continue;
+			if (Nt(t.price, f, s) !== c) continue;
 			let n = t.start.getTime();
 			if (n > o.getTime()) {
-				let e = mt(t.start, a);
+				let e = yt(t.start, a);
 				return r === 0 ? e : q("next_price_level_tomorrow", i, { time: e });
 			}
-			let l = n + tn(d, e);
+			let l = n + ln(d, e);
 			if (o.getTime() >= n && o.getTime() < l) return q("label_now", i);
 		}
 	}
 	return "—";
 }
-function un(e, t, n) {
-	return Jt(n, qt(e, Kt(e, t)));
+function _n(e, t, n) {
+	return tn(n, en(e, $t(e, t)));
 }
-function dn(e, t, n, r) {
+function vn(e, t, n, r) {
 	if (!e?.detailed_colors || !e?.[t]) return null;
 	let i = X(e?.[n]);
 	return i === null ? null : i * (r || 1);
 }
-function fn(e) {
+function yn(e) {
 	return e === "tomorrow" ? "tomorrow" : e === "two_days" ? "two_days" : "today";
 }
-function pn(e, t, n, r = "UTC") {
-	let i = t?.attributes || {}, a = bt(i), o = fn(n), s = Kt(e, i), c = an(i, a, r), l = e.two_day_mode || "span", u = [], d = null, f = null, p = null, m = {
+function bn(e, t, n, r = "UTC") {
+	let i = t?.attributes || {}, a = Tt(i), o = yn(n), s = $t(e, i), c = fn(i, a, r), l = e.two_day_mode || "span", u = [], d = null, f = null, p = null, m = {
 		factor: 1,
 		points: []
-	}, h = /* @__PURE__ */ new Date(), g = ft(h, r), _ = dt(h, 1, r), v = dt(h, 2, r), y = (e, t) => (t.getTime() - e.getTime()) / 36e5, b = y(g, _), x = g, S = b, C = 0;
-	if (o === "tomorrow") c && (m = un(e, i, Z(a, h, 1, r)), u = m.points, p = cn(e, i, u, m.factor, "tomorrow"), C = u.length, x = _, S = y(_, v));
+	}, h = /* @__PURE__ */ new Date(), g = ht(h, r), _ = Y(h, 1, r), v = Y(h, 2, r), y = (e, t) => (t.getTime() - e.getTime()) / 36e5, b = y(g, _), x = g, S = b, C = 0;
+	if (o === "tomorrow") c && (m = _n(e, i, Z(a, h, 1, r)), u = m.points, p = hn(e, i, u, m.factor, "tomorrow"), C = u.length, x = _, S = y(_, v));
 	else if (o === "two_days") {
 		if (c) {
 			let t = Z(a, h, 0, r), n = Z(a, h, 1, r);
-			m = un(e, i, t);
-			let o = m.factor, s = m.points, c = Jt(n, o).points;
-			c.length && (l === "span" ? (u = [...s, ...c], p = cn(e, i, u, o, "today_tomorrow"), S = y(g, v), C = u.length) : (u = s, d = c, f = c.map((e) => ({
-				...e,
-				start: pt(e.start, g, r)
-			})), p = cn(e, i, u, o, "today"), S = y(g, _), C = u.length)), x = g;
+			m = _n(e, i, t);
+			let o = m.factor, s = m.points, c = tn(n, o).points;
+			c.length && (l === "span" ? (u = [...s, ...c], p = hn(e, i, u, o, "today_tomorrow"), S = y(g, v), C = u.length) : (u = s, d = c, f = _t(c, g, r), p = hn(e, i, u, o, "today"), S = y(g, _), C = u.length)), x = g;
 		}
-	} else m = un(e, i, Z(a, h, 0, r)), u = m.points, p = cn(e, i, u, m.factor, "today"), C = u.length, x = g;
+	} else m = _n(e, i, Z(a, h, 0, r)), u = m.points, p = hn(e, i, u, m.factor, "today"), C = u.length, x = g;
 	let w = (o === "tomorrow" || o === "two_days") && !c;
 	return w && !p && (p = {
 		p20: 0,
@@ -1697,16 +1753,16 @@ function pn(e, t, n, r = "UTC") {
 		showPending: w
 	};
 }
-function mn(e, t, n, r = "UTC") {
-	let i = un(e, t, Z(n, /* @__PURE__ */ new Date(), 0, r)), a = i.points, o = a.length ? cn(e, t, a, i.factor, "today") : null, s = null, c = "";
+function xn(e, t, n, r = "UTC") {
+	let i = _n(e, t, Z(n, /* @__PURE__ */ new Date(), 0, r)), a = i.points, o = a.length ? hn(e, t, a, i.factor, "today") : null, s = null, c = "";
 	if (a.length) {
 		let e = /* @__PURE__ */ new Date(), t = -1;
 		for (let n = 0; n < a.length && a[n].start <= e; n++) t = n;
 		if (t >= 0) {
-			let n = a[t], i = tn(a, t), o = a[t + 1], l = n.start.getTime() + i, u = o?.start ? Math.min(o.start.getTime(), l) : l;
+			let n = a[t], i = ln(a, t), o = a[t + 1], l = n.start.getTime() + i, u = o?.start ? Math.min(o.start.getTime(), l) : l;
 			if (e.getTime() < u) {
 				s = n;
-				let e = new Date(u), t = (e) => mt(e, r);
+				let e = new Date(u), t = (e) => yt(e, r);
 				c = `${t(s.start)}-${t(e)}`;
 			}
 		}
@@ -1718,34 +1774,36 @@ function mn(e, t, n, r = "UTC") {
 	};
 }
 //#endregion
+//#region src/card-actions.ts
+function Sn(e) {
+	return e?.key === "Enter" || e?.key === " ";
+}
+//#endregion
 //#region src/card-content.ts
-function hn(e, t, n, r, i) {
+function Cn(e, t, n, r, i) {
 	if (!e) return null;
 	if (e.source === "entity") {
 		let n = t?.states?.[e.entity];
 		if (!n) return null;
-		let r = t?.formatEntityState ? t.formatEntityState(n) : String(n.state ?? ""), i = String(r ?? "").replace(/\u00A0/g, " ").trim(), a = Bt(n, Lt(n.attributes?.unit_of_measurement || "", e.unit_display_mode));
-		return e.show_unit ? Ht(i, a) : {
-			value: Vt(i, a),
+		let r = t?.formatEntityState ? t.formatEntityState(n) : String(n.state ?? ""), i = String(r ?? "").replace(/\u00A0/g, " ").trim(), a = qt(n, Ut(n.attributes?.unit_of_measurement || "", e.unit_display_mode));
+		return e.show_unit ? Yt(i, a) : {
+			value: Jt(i, a),
 			unit: ""
 		};
 	}
 	if (e.source === "attribute") {
 		if (!n) return null;
 		let a = n.attributes?.[e.attribute], o = X(a);
-		return o === null ? (a == null || typeof a == "string" && !a.trim()) && (a = null) : a = o * qt(i, Kt(i, n.attributes)), {
-			value: nt(a, r),
-			unit: Lt(Xt(i, n.attributes, J(t)), e.unit_display_mode)
+		return o === null ? (a == null || typeof a == "string" && !a.trim()) && (a = null) : a = o * en(i, $t(i, n.attributes)), {
+			value: ot(a, r),
+			unit: Ut(rn(i, n.attributes, at(t)), e.unit_display_mode)
 		};
 	}
 	return null;
 }
 //#endregion
-//#region src/card-styles.ts
-var gn = "\n        ha-card { overflow: hidden; }\n        .header { padding: 16px 16px 0 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 10px; }\n        .header-item { min-width: 0; font-size: 16px; font-weight: 600; color: var(--primary-text-color); }\n        .header-item-right { margin-left: auto; text-align: right; }\n        .header-metric { display: flex; flex-direction: column; line-height: 1.05; }\n        .header-metric-top { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); min-height: 13px; }\n        .header-metric-main { font-size: 18px; font-weight: 700; color: var(--primary-text-color); white-space: nowrap; }\n        .header-price-main { font-size: 30px; font-weight: 800; color: var(--primary-text-color); white-space: nowrap; }\n        .header-metric-unit { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); }\n        .info-grid {\n          display: grid;\n          grid-template-columns: repeat(var(--info-cols, var(--info-max-cols, 4)), minmax(100px, 1fr));\n          gap: var(--info-gap, 10px);\n          margin: 6px 0 0 0;\n        }\n        .info-grid.top { margin-bottom: -6px; }\n        .info-grid.bottom { margin-top: 14px; margin-bottom: 0; }\n        .info-item {\n          font-size: 12px;\n          color: var(--secondary-text-color);\n          display: grid;\n          grid-template-rows: minmax(0, 1fr) auto;\n          align-items: end;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          padding: 10px 10px;\n          aspect-ratio: 1 / 1;\n          min-height: 0;\n          box-sizing: border-box;\n        }\n        .info-item.has-action { cursor: pointer; }\n        .info-item.has-action:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n        }\n        .info-label {\n          font-size: 11px;\n          opacity: .82;\n          min-height: 12px;\n          width: 100%;\n          text-align: center;\n          overflow: hidden;\n          white-space: nowrap;\n          line-height: 1.1;\n        }\n        .info-label-text { display: inline-block; transform: translateX(0); will-change: transform; }\n        .info-label.marquee .info-label-text { animation: info-label-marquee var(--marquee-duration, 5s) ease-in-out infinite alternate; }\n        @keyframes info-label-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--marquee-shift, 0px))); } }\n        .info-value {\n          color: var(--primary-text-color);\n          font-weight: 700;\n          line-height: 1.08;\n          text-align: center;\n          width: 100%;\n          height: 100%;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          align-self: center;\n          justify-self: center;\n          gap: 0;\n          overflow: hidden;\n          white-space: nowrap;\n          text-overflow: ellipsis;\n        }\n        .info-value-inline { display: inline-flex; align-items: baseline; justify-content: center; max-width: 100%; overflow: hidden; }\n        .info-value-main { font-size: var(--info-main-size, 24px); font-weight: 800; line-height: 1; }\n        .info-value-unit { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); line-height: 1; }\n        .content { padding: 8px 16px 12px 16px; }\n        .pg-wrap { position: relative; padding-top: 0; margin-top: 0; touch-action: pan-y; cursor: pointer; }\n        .pg-wrap:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n          border-radius: 10px;\n        }\n        .content.no-info .pg-wrap { margin-top: -10px; }\n        .content.has-info .pg-wrap { margin-top: -6px; }\n        .pg-empty {\n          position: absolute;\n          inset: 0;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          pointer-events: none;\n        }\n        .pg-empty-card {\n          display: flex;\n          flex-direction: column;\n          align-items: center;\n          gap: 10px;\n          color: var(--secondary-text-color);\n          background: color-mix(in srgb, var(--card-background-color) 82%, var(--primary-color) 18%);\n          border: 1px solid rgba(120,120,120,0.28);\n          border-radius: 12px;\n          padding: 12px 14px;\n          max-width: min(88%, 420px);\n          max-height: calc(100% - 8px);\n          text-align: center;\n          overflow: hidden;\n        }\n        .pg-empty-text { font-size: 13px; line-height: 1.35; }\n        .pg-empty-gears {\n          width: 62px;\n          height: 44px;\n          overflow: visible;\n          color: var(--secondary-text-color);\n          opacity: 0.95;\n        }\n        .pg-empty-gear-lg { transform-origin: 20px 24px; animation: pg-spin-cw 9s linear infinite; }\n        .pg-empty-gear-sm-a { transform-origin: 39px 17px; animation: pg-spin-ccw 7s linear infinite; }\n        .pg-empty-gear-sm-b { transform-origin: 47px 31px; animation: pg-spin-ccw 11s linear infinite; }\n        .pg-empty-gear-lg, .pg-empty-gear-sm-a, .pg-empty-gear-sm-b { transform-box: fill-box; transform-origin: center; }\n        .pg-empty.is-timeline .pg-empty-card { padding: 0px 10px; border-radius: 10px; gap: 0px; max-width: min(86%, 360px); }\n        .pg-empty.is-timeline .pg-empty-text { font-size: 12px; line-height: 1.2; }\n        .pg-empty.is-timeline .pg-empty-gears { width: 40px; height: 24px; }\n        @keyframes pg-spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }\n        @keyframes pg-spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }\n        .pg-legend { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 8px 0 6px 0; font-size: 13px; opacity: .9; }\n        .pg-legend.is-timeline { margin-top: -17px; }\n        .pg-legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }\n        .pg-legend-dot { width: 8px; height: 8px; border-radius: 999px; background: #999; }\n        .pg-buttons {\n          position: relative;\n          display: grid;\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n          margin-top: 6px;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          overflow: hidden;\n        }\n        .pg-buttons-indicator {\n          position: absolute;\n          left: 0;\n          bottom: 0;\n          width: 33.3333%;\n          height: 3px;\n          background: var(--primary-color);\n          transition: transform .22s cubic-bezier(.2,.7,.2,1);\n          pointer-events: none;\n        }\n        .pg-buttons.day-today .pg-buttons-indicator { transform: translateX(0%); }\n        .pg-buttons.day-tomorrow .pg-buttons-indicator { transform: translateX(100%); }\n        .pg-buttons.day-two_days .pg-buttons-indicator { transform: translateX(200%); }\n        .pg-btn {\n          position: relative;\n          padding: 11px 8px;\n          border-radius: 0;\n          border: 0;\n          background: transparent;\n          color: var(--primary-text-color);\n          font-size: 13px;\n          font-weight: 600;\n          opacity: .8;\n          cursor: pointer;\n          overflow: visible;\n          -webkit-tap-highlight-color: transparent;\n          transition: color .18s ease, opacity .18s ease;\n        }\n        .pg-btn.active {\n          color: var(--primary-color);\n          opacity: 1;\n        }\n        .pg-btn-state {\n          position: absolute;\n          width: 12px;\n          height: 12px;\n          border-radius: 999px;\n          background: color-mix(in srgb, var(--primary-color) 22%, transparent);\n          transform: translate(-50%, -50%) scale(0);\n          opacity: 0;\n          pointer-events: none;\n        }\n        .pg-btn-state.run { animation: pg-btn-state .36s cubic-bezier(.2,.7,.2,1); }\n        @keyframes pg-btn-state {\n          0% { opacity: .95; transform: translate(-50%, -50%) scale(0); }\n          70% { opacity: .38; transform: translate(-50%, -50%) scale(14); }\n          100% { opacity: 0; transform: translate(-50%, -50%) scale(18); }\n        }\n        .pg-tooltip {\n          position:absolute; pointer-events:none;\n          background: var(--card-background-color);\n          border: 1px solid rgba(120,120,120,.35);\n          box-shadow: 0 2px 10px rgba(0,0,0,.18);\n          border-radius: 10px;\n          padding: 6px 8px;\n          font-size: 12px;\n          color: var(--primary-text-color);\n          transform: translate(-50%, -100%);\n          display:none;\n          white-space: nowrap;\n          z-index: 2;\n        }\n        .pg-sub { opacity:.75; font-size:11px; }\n        svg.svg { width: 100%; height: 100%; display:block; }\n        .tl-root { position: relative; display: flex; flex-direction: column; gap: 9px; height: 100%; justify-content: center; }\n        .tl-track { position: relative; display: flex; height: 6px; align-items: stretch; }\n        .tl-slot { flex: 1 1 0; min-width: 0; }\n        .tl-past {\n          position: absolute;\n          left: 0;\n          top: 0;\n          bottom: 0;\n          background: rgba(0, 0, 0, 0.22);\n          pointer-events: none;\n        }\n        .tl-now {\n          position: absolute;\n          top: 50%;\n          width: 3px;\n          height: 14px;\n          border-radius: 10px;\n          transform: translateY(-50%);\n          pointer-events: none;\n          box-shadow: 0 0 4px rgba(0,0,0,0.3);\n          box-sizing: border-box;\n        }\n        .tl-scale { display: grid; gap: 0; }\n        .tl-tick { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }\n        .tl-dot { width: 3px; height: 3px; border-radius: 999px; background: rgba(120,120,120,0.55); margin-bottom: 3px; }\n        .tl-dot.major { width: 4px; height: 4px; background: rgba(20,20,20,0.9); }\n        .tl-hour { font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n        .tl-days { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; pointer-events: none; }\n        .tl-day { text-align: center; font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n      ";
-//#endregion
 //#region src/runtime-config.ts
-function _n(e, t) {
+function wn(e, t) {
 	return e?.view_mode === "timeline" && t === "two_days" && e.two_day_mode !== "span" ? {
 		...e,
 		two_day_mode: "span"
@@ -1753,9 +1811,9 @@ function _n(e, t) {
 }
 //#endregion
 //#region src/card-render.ts
-function vn() {
+function Tn() {
 	if (!this._config) return R``;
-	let e = this._config, t = this.hass, n = J(t), r = gt(t), i = G(e.title_item_left, "title", ""), a = G(e.title_item_right, "attribute", ""), o = i.label || "", s = W(e.content_items), c = e.view_mode === "timeline" ? 74 : Number(e.height) || 280;
+	let e = this._config, t = this.hass, n = at(t), r = xt(t), i = G(e.title_item_left, "title", ""), a = G(e.title_item_right, "attribute", ""), o = i.label || "", s = W(e.content_items), c = e.view_mode === "timeline" ? 74 : Number(e.height) || 280;
 	if (!t) return R`
         <ha-card>
           <div class="header">${o}</div>
@@ -1773,7 +1831,7 @@ function vn() {
           </div>
         </ha-card>
       `;
-	let u = _n(e, this._dayView), { timelineAll: d, dayView: f, currency: p, dayPoints: m, thresholds: h, scaled: g, debugPointsCount: _, showPending: v } = this._getDayCtx(u, l, r);
+	let u = wn(e, this._dayView), { timelineAll: d, dayView: f, currency: p, dayPoints: m, thresholds: h, scaled: g, debugPointsCount: _, showPending: v } = this._getDayCtx(u, l, r);
 	if (!m.length && !v) return R`
         <ha-card>
           <div class="header">${o}</div>
@@ -1787,9 +1845,9 @@ function vn() {
 	let y = e.debug ? R`
       <div style="margin-top:8px;font-size:12px;opacity:.85">
         <div><b>${q("debug", n)}</b> — ${q("points", n)}: ${_}, ${q("currency", n)}: ${p || "?"}, ${q("factor", n)}: ${g.factor}</div>
-        <div>p20: ${Y(h.p20, 2)}, avg: ${Y(h.avg, 2)}, p70: ${Y(h.p70, 2)}</div>
+        <div>p20: ${J(h.p20, 2)}, avg: ${J(h.avg, 2)}, p70: ${J(h.p70, 2)}</div>
       </div>
-    ` : R``, b = mn(e, l.attributes, d, r), x = b.currentPoint, S = b.thresholds || h, C = b.currentWindow || "", w = (i, a = "header") => {
+    ` : R``, b = xn(e, l.attributes, d, r), x = b.currentPoint, S = b.thresholds || h, C = b.currentWindow || "", w = (i, a = "header") => {
 		if (!i) return null;
 		if (i.source === "title") {
 			if (a !== "header") return null;
@@ -1803,7 +1861,7 @@ function vn() {
 		}
 		if (i.source === "price_level") {
 			if (!x) return null;
-			let t = kt(x.price, S, n), r = i.use_color ? Ot(e, x.price, S) : null;
+			let t = Ft(x.price, S, n), r = i.use_color ? Pt(e, x.price, S) : null;
 			return a === "header" ? {
 				variant: "metric",
 				top: i.label || q("header_price_level_default", n),
@@ -1818,7 +1876,7 @@ function vn() {
 			};
 		}
 		if (i.source === "next_price_level") {
-			let t = ln(e, l.attributes, d, i.price_level, n, r), o = i.label || q("content_next_price_level_label", n);
+			let t = gn(e, l.attributes, d, i.price_level, n, r), o = i.label || q("content_next_price_level_label", n);
 			return a === "header" ? {
 				variant: "metric",
 				top: o,
@@ -1834,7 +1892,7 @@ function vn() {
 		}
 		if (i.source === "current_price") {
 			if (!x) return null;
-			let t = Lt(Xt(e, l.attributes, n), i.unit_display_mode), r = nt(x.price, e.decimals);
+			let t = Ut(rn(e, l.attributes, n), i.unit_display_mode), r = ot(x.price, e.decimals);
 			return a === "header" ? {
 				variant: "price",
 				top: i.time_overwrite && i.label ? i.label : C,
@@ -1851,7 +1909,7 @@ function vn() {
 			};
 		}
 		if (i.source === "price_range" || i.source === "avg_price") {
-			let t = i.source === "price_range", o = i.label || `${q(t ? "content_price_range_label" : "content_avg_price_label", n)} ${$t(i.range_day, n, f)}`, s = i.show_unit ? Lt(Xt(e, l.attributes, n), i.unit_display_mode) : "", c = sn(e, l.attributes, n, i.range_day, t ? "range" : "avg", f, !1, i.unit_display_mode, r);
+			let t = i.source === "price_range", o = i.label || `${q(t ? "content_price_range_label" : "content_avg_price_label", n)} ${sn(i.range_day, n, f)}`, s = i.show_unit ? Ut(rn(e, l.attributes, n), i.unit_display_mode) : "", c = mn(e, l.attributes, n, i.range_day, t ? "range" : "avg", f, !1, i.unit_display_mode, r);
 			return a === "header" ? {
 				variant: "metric",
 				top: o,
@@ -1866,7 +1924,7 @@ function vn() {
 				item: i
 			};
 		}
-		let o = hn(i, t, l, e.decimals, e);
+		let o = Cn(i, t, l, e.decimals, e);
 		if (!o) return null;
 		let s = o.value === "—" || o.value === "";
 		if (a === "header" && !i.label && s || a !== "header" && !i.label && !i.attribute && !i.entity && s) return null;
@@ -1919,6 +1977,7 @@ function vn() {
           @pointerleave=${(t) => this._onSlotPointerLeave(e.item, t)}
           @click=${(t) => this._onSlotClick(e.item, t)}
           @dblclick=${(t) => this._onSlotDblClick(e.item, t)}
+          @keydown=${(t) => this._onSlotKeyDown(e.item, t)}
         >
           <div class="info-value" style=${e.color ? `color:${e.color}` : ""}>
             <span class="info-value-inline">
@@ -1931,7 +1990,7 @@ function vn() {
         </div>
       `;
 	}, D = s.map((e) => w(e, "info")).filter((e) => !!e), O = e.content_items_position === "bottom" ? "bottom" : "top", k = O === "top" ? D : [], A = O === "bottom" ? D : [], j = k.length > 0, M = e.detailed_colors ? Ee.map(({ key: t, label: n, fallback: r }) => ({
-		color: xt(e[t], r),
+		color: Et(e[t], r),
 		label: n
 	})) : [{
 		color: we,
@@ -1941,7 +2000,6 @@ function vn() {
 		label: "region_above_avg"
 	}];
 	return R`
-      <style>${gn}</style>
       <ha-card>
         <div class="header"
           role="button"
@@ -1951,6 +2009,7 @@ function vn() {
           @pointerleave=${this._onHeaderPointerLeave}
           @click=${this._onHeaderClick}
           @dblclick=${this._onHeaderDblClick}
+          @keydown=${this._onHeaderKeyDown}
         >
           ${T(i, "header-item")}
           ${T(a, "header-item header-item-right")}
@@ -1969,6 +2028,7 @@ function vn() {
             @pointerleave=${this._onHeaderPointerLeave}
             @click=${this._onHeaderClick}
             @dblclick=${this._onHeaderDblClick}
+          @keydown=${this._onHeaderKeyDown}
           >
             <div class="pg-tooltip" id="pg-tooltip"></div>
             <div id="pg-svg-host" style="height:${c}px"></div>
@@ -2039,16 +2099,28 @@ function vn() {
     `;
 }
 //#endregion
+//#region src/card-styles.ts
+var En = "\n        ha-card { overflow: hidden; }\n        .header { padding: 16px 16px 0 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 10px; }\n        .header-item { min-width: 0; font-size: 16px; font-weight: 600; color: var(--primary-text-color); }\n        .header-item-right { margin-left: auto; text-align: right; }\n        .header-metric { display: flex; flex-direction: column; line-height: 1.05; }\n        .header-metric-top { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); min-height: 13px; }\n        .header-metric-main { font-size: 18px; font-weight: 700; color: var(--primary-text-color); white-space: nowrap; }\n        .header-price-main { font-size: 30px; font-weight: 800; color: var(--primary-text-color); white-space: nowrap; }\n        .header-metric-unit { font-size: 12px; font-weight: 500; color: var(--secondary-text-color); }\n        .info-grid {\n          display: grid;\n          grid-template-columns: repeat(var(--info-cols, var(--info-max-cols, 4)), minmax(100px, 1fr));\n          gap: var(--info-gap, 10px);\n          margin: 6px 0 0 0;\n        }\n        .info-grid.top { margin-bottom: -6px; }\n        .info-grid.bottom { margin-top: 14px; margin-bottom: 0; }\n        .info-item {\n          font-size: 12px;\n          color: var(--secondary-text-color);\n          display: grid;\n          grid-template-rows: minmax(0, 1fr) auto;\n          align-items: end;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          padding: 10px 10px;\n          aspect-ratio: 1 / 1;\n          min-height: 0;\n          box-sizing: border-box;\n        }\n        .info-item.has-action { cursor: pointer; }\n        .info-item.has-action:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n        }\n        .info-label {\n          font-size: 11px;\n          opacity: .82;\n          min-height: 12px;\n          width: 100%;\n          text-align: center;\n          overflow: hidden;\n          white-space: nowrap;\n          line-height: 1.1;\n        }\n        .info-label-text { display: inline-block; transform: translateX(0); will-change: transform; }\n        .info-label.marquee .info-label-text { animation: info-label-marquee var(--marquee-duration, 5s) ease-in-out infinite alternate; }\n        @keyframes info-label-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--marquee-shift, 0px))); } }\n        .info-value {\n          color: var(--primary-text-color);\n          font-weight: 700;\n          line-height: 1.08;\n          text-align: center;\n          width: 100%;\n          height: 100%;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          align-self: center;\n          justify-self: center;\n          gap: 0;\n          overflow: hidden;\n          white-space: nowrap;\n          text-overflow: ellipsis;\n        }\n        .info-value-inline { display: inline-flex; align-items: baseline; justify-content: center; max-width: 100%; overflow: hidden; }\n        .info-value-main { font-size: var(--info-main-size, 24px); font-weight: 800; line-height: 1; }\n        .info-value-unit { font-size: 11px; font-weight: 600; color: var(--secondary-text-color); line-height: 1; }\n        .content { padding: 8px 16px 12px 16px; }\n        .pg-wrap { position: relative; padding-top: 0; margin-top: 0; touch-action: pan-y; cursor: pointer; }\n        .pg-wrap:focus-visible {\n          outline: 2px solid var(--primary-color);\n          outline-offset: 2px;\n          border-radius: 10px;\n        }\n        .content.no-info .pg-wrap { margin-top: -10px; }\n        .content.has-info .pg-wrap { margin-top: -6px; }\n        .pg-empty {\n          position: absolute;\n          inset: 0;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          pointer-events: none;\n        }\n        .pg-empty-card {\n          display: flex;\n          flex-direction: column;\n          align-items: center;\n          gap: 10px;\n          color: var(--secondary-text-color);\n          background: color-mix(in srgb, var(--card-background-color) 82%, var(--primary-color) 18%);\n          border: 1px solid rgba(120,120,120,0.28);\n          border-radius: 12px;\n          padding: 12px 14px;\n          max-width: min(88%, 420px);\n          max-height: calc(100% - 8px);\n          text-align: center;\n          overflow: hidden;\n        }\n        .pg-empty-text { font-size: 13px; line-height: 1.35; }\n        .pg-empty-gears {\n          width: 62px;\n          height: 44px;\n          overflow: visible;\n          color: var(--secondary-text-color);\n          opacity: 0.95;\n        }\n        .pg-empty-gear-lg { transform-origin: 20px 24px; animation: pg-spin-cw 9s linear infinite; }\n        .pg-empty-gear-sm-a { transform-origin: 39px 17px; animation: pg-spin-ccw 7s linear infinite; }\n        .pg-empty-gear-sm-b { transform-origin: 47px 31px; animation: pg-spin-ccw 11s linear infinite; }\n        .pg-empty-gear-lg, .pg-empty-gear-sm-a, .pg-empty-gear-sm-b { transform-box: fill-box; transform-origin: center; }\n        .pg-empty.is-timeline .pg-empty-card { padding: 0px 10px; border-radius: 10px; gap: 0px; max-width: min(86%, 360px); }\n        .pg-empty.is-timeline .pg-empty-text { font-size: 12px; line-height: 1.2; }\n        .pg-empty.is-timeline .pg-empty-gears { width: 40px; height: 24px; }\n        @keyframes pg-spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }\n        @keyframes pg-spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }\n        .pg-legend { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 8px 0 6px 0; font-size: 13px; opacity: .9; }\n        .pg-legend.is-timeline { margin-top: -17px; }\n        .pg-legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }\n        .pg-legend-dot { width: 8px; height: 8px; border-radius: 999px; background: #999; }\n        .pg-buttons {\n          position: relative;\n          display: grid;\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n          margin-top: 6px;\n          background: color-mix(in srgb, var(--card-background-color) 92%, var(--primary-text-color) 8%);\n          border: 1px solid rgba(120,120,120,0.26);\n          border-radius: 14px;\n          overflow: hidden;\n        }\n        .pg-buttons-indicator {\n          position: absolute;\n          left: 0;\n          bottom: 0;\n          width: 33.3333%;\n          height: 3px;\n          background: var(--primary-color);\n          transition: transform .22s cubic-bezier(.2,.7,.2,1);\n          pointer-events: none;\n        }\n        .pg-buttons.day-today .pg-buttons-indicator { transform: translateX(0%); }\n        .pg-buttons.day-tomorrow .pg-buttons-indicator { transform: translateX(100%); }\n        .pg-buttons.day-two_days .pg-buttons-indicator { transform: translateX(200%); }\n        .pg-btn {\n          position: relative;\n          padding: 11px 8px;\n          border-radius: 0;\n          border: 0;\n          background: transparent;\n          color: var(--primary-text-color);\n          font-size: 13px;\n          font-weight: 600;\n          opacity: .8;\n          cursor: pointer;\n          overflow: visible;\n          -webkit-tap-highlight-color: transparent;\n          transition: color .18s ease, opacity .18s ease;\n        }\n        .pg-btn.active {\n          color: var(--primary-color);\n          opacity: 1;\n        }\n        .pg-btn-state {\n          position: absolute;\n          width: 12px;\n          height: 12px;\n          border-radius: 999px;\n          background: color-mix(in srgb, var(--primary-color) 22%, transparent);\n          transform: translate(-50%, -50%) scale(0);\n          opacity: 0;\n          pointer-events: none;\n        }\n        .pg-btn-state.run { animation: pg-btn-state .36s cubic-bezier(.2,.7,.2,1); }\n        @keyframes pg-btn-state {\n          0% { opacity: .95; transform: translate(-50%, -50%) scale(0); }\n          70% { opacity: .38; transform: translate(-50%, -50%) scale(14); }\n          100% { opacity: 0; transform: translate(-50%, -50%) scale(18); }\n        }\n        .pg-tooltip {\n          position:absolute; pointer-events:none;\n          background: var(--card-background-color);\n          border: 1px solid rgba(120,120,120,.35);\n          box-shadow: 0 2px 10px rgba(0,0,0,.18);\n          border-radius: 10px;\n          padding: 6px 8px;\n          font-size: 12px;\n          color: var(--primary-text-color);\n          transform: translate(-50%, -100%);\n          display:none;\n          white-space: nowrap;\n          z-index: 2;\n        }\n        .pg-sub { opacity:.75; font-size:11px; }\n        svg.svg { width: 100%; height: 100%; display:block; }\n        .tl-root { position: relative; display: flex; flex-direction: column; gap: 9px; height: 100%; justify-content: center; }\n        .tl-track { position: relative; display: flex; height: 6px; align-items: stretch; }\n        .tl-slot { flex: 1 1 0; min-width: 0; }\n        .tl-past {\n          position: absolute;\n          left: 0;\n          top: 0;\n          bottom: 0;\n          background: rgba(0, 0, 0, 0.22);\n          pointer-events: none;\n        }\n        .tl-now {\n          position: absolute;\n          top: 50%;\n          width: 3px;\n          height: 14px;\n          border-radius: 10px;\n          transform: translateY(-50%);\n          pointer-events: none;\n          box-shadow: 0 0 4px rgba(0,0,0,0.3);\n          box-sizing: border-box;\n        }\n        .tl-scale { display: grid; gap: 0; }\n        .tl-tick { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }\n        .tl-dot { width: 3px; height: 3px; border-radius: 999px; background: rgba(120,120,120,0.55); margin-bottom: 3px; }\n        .tl-dot.major { width: 4px; height: 4px; background: rgba(20,20,20,0.9); }\n        .tl-hour { font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n        .tl-days { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; pointer-events: none; }\n        .tl-day { text-align: center; font-size: 11px; line-height: 1; color: var(--secondary-text-color); }\n      ";
+//#endregion
 //#region src/card-update.ts
 function $(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-function yn(e, t) {
-	return e?.get(t) ?? null;
+function Dn(e, t, n, r) {
+	return !!e && e === t && !!n && n === r && !!n.firstChild;
 }
-function bn() {
+function On(e, t, n, r) {
+	let i = [];
+	if (!e?.length) return i;
+	for (let a = 0; a < e.length; a++) {
+		let o = e[a + 1]?.start || r;
+		e[a].start < n && o > t && i.push(e[a].price);
+	}
+	return i;
+}
+function kn() {
 	if (!this.hass || !this._config) return;
-	let e = this._config, t = J(this.hass), n = gt(this.hass), r = this.renderRoot?.querySelector(".pg-wrap"), i = this.renderRoot?.querySelector("#pg-svg-host"), a = this.renderRoot?.querySelector("#pg-tooltip"), o = this.renderRoot?.querySelector(".content"), s = this.renderRoot?.querySelectorAll(".info-grid") || [];
+	let e = this._config, t = at(this.hass), n = xt(this.hass), r = this.renderRoot?.querySelector(".pg-wrap"), i = this.renderRoot?.querySelector("#pg-svg-host"), a = this.renderRoot?.querySelector("#pg-tooltip"), o = this.renderRoot?.querySelector(".content"), s = this.renderRoot?.querySelectorAll(".info-grid") || [];
 	if (o && s.length) {
 		let e = Math.round(o.clientWidth || 0);
 		if (e > 0) {
@@ -2058,18 +2130,24 @@ function bn() {
 			});
 		}
 	}
-	if (this._syncInfoLabelMarquee(), this._syncInfoValueFit(), !r || !i || !a) return;
+	if (this._syncInfoLabelMarquee(), this._syncInfoValueFit(), !r || !i || !a) {
+		this._lastGraphSignature = null;
+		return;
+	}
 	this._syncResizeObserver(o, r, i);
 	let c = this.hass.states?.[this._config.entity];
-	if (!c) return;
-	let l = _n(e, this._dayView), u = this._getDayCtx(l, c, n), { dayView: d, twoDayMode: f, dayPoints: p, overlayPoints: m, overlayShifted: h, thresholds: g, dayStart: _, dayHours: v, firstDayHours: y, showPending: b } = u;
+	if (!c) {
+		this._lastGraphSignature = null;
+		return;
+	}
+	let l = wn(e, this._dayView), u = this._getDayCtx(l, c, n), { dayView: d, twoDayMode: f, dayPoints: p, overlayPoints: m, overlayShifted: h, thresholds: g, dayStart: _, dayHours: v, firstDayHours: y, showPending: b } = u;
 	if (!p.length || b) {
 		this._lastGraphSignature = null, this._unbindGraphPointer(), i.innerHTML = "", a.style.display = "none";
 		return;
 	}
-	let x = [...p].sort((e, t) => e.start - t.start), S = Xt(l, c.attributes, t), C = this._buildGraphSignature(l, c, u, i, r, t, n);
-	if (C && C === this._lastGraphSignature) return;
-	if (this._lastGraphSignature = C, l.view_mode === "timeline") {
+	let x = [...p].sort((e, t) => e.start - t.start), S = rn(l, c.attributes, t), C = this._buildGraphSignature(l, c, u, i, r, t, n);
+	if (Dn(C, this._lastGraphSignature, i, this._lastGraphHost)) return;
+	if (this._lastGraphSignature = C, this._lastGraphHost = i, l.view_mode === "timeline") {
 		this._unbindGraphPointer(), a.style.display = "none";
 		let e = new Date(_.getTime() + v * 3600 * 1e3), o = document.createElement("div");
 		o.className = "tl-root";
@@ -2078,7 +2156,7 @@ function bn() {
 		let c = document.createElement("div");
 		c.className = "tl-scale", c.style.gridTemplateColumns = `repeat(${v + 1}, minmax(0, 1fr))`;
 		for (let e = 0; e < x.length; e++) {
-			let t = x[e], n = Ot(l, t.price, g), r = x[e - 1], i = x[e + 1], a = r ? Ot(l, r.price, g) : null, o = i ? Ot(l, i.price, g) : null, c = document.createElement("div");
+			let t = x[e], n = Pt(l, t.price, g), r = x[e - 1], i = x[e + 1], a = r ? Pt(l, r.price, g) : null, o = i ? Pt(l, i.price, g) : null, c = document.createElement("div");
 			c.className = "tl-slot", c.style.background = n, a !== n && (c.style.borderTopLeftRadius = "999px", c.style.borderBottomLeftRadius = "999px"), o !== n && (c.style.borderTopRightRadius = "999px", c.style.borderBottomRightRadius = "999px"), s.appendChild(c);
 		}
 		let u = /* @__PURE__ */ new Date();
@@ -2092,19 +2170,19 @@ function bn() {
 				}
 			}
 			let n = $((u.getTime() - _.getTime()) / (e.getTime() - _.getTime()), 0, 1), i = document.createElement("div");
-			i.className = "tl-past", i.style.width = `${n * 100}%`, i.style.background = Tt(r), s.appendChild(i);
-			let a = Ot(l, t.price, g), o = document.createElement("div");
+			i.className = "tl-past", i.style.width = `${n * 100}%`, i.style.background = jt(r), s.appendChild(i);
+			let a = Pt(l, t.price, g), o = document.createElement("div");
 			o.className = "tl-now", o.style.left = `calc(${n * 100}% - 3.5px)`, o.style.height = "14px", o.style.width = "7px", o.style.background = a, o.style.border = "2px solid var(--card-background-color)", s.appendChild(o);
 		}
-		for (let e = 0; e <= v; e += 1) {
-			let t = document.createElement("div");
-			t.className = "tl-tick";
-			let r = e % 6 == 0 || e === v, i = document.createElement("div");
-			if (i.className = `tl-dot ${r ? "major" : ""}`.trim(), t.appendChild(i), r) {
-				let r = document.createElement("div");
-				r.className = "tl-hour", r.textContent = mt(new Date(_.getTime() + e * 3600 * 1e3), n).slice(0, 2), t.appendChild(r);
+		for (let { index: e, hour: t, repeated: r } of vt(_, v, n)) {
+			let n = document.createElement("div");
+			n.className = "tl-tick";
+			let i = !r && (t % 6 == 0 || e === v), a = document.createElement("div");
+			if (a.className = `tl-dot ${i ? "major" : ""}`.trim(), n.appendChild(a), i) {
+				let e = document.createElement("div");
+				e.className = "tl-hour", e.textContent = String(t).padStart(2, "0"), n.appendChild(e);
 			}
-			c.appendChild(t);
+			c.appendChild(n);
 		}
 		if (o.appendChild(s), o.appendChild(c), d === "two_days") {
 			let e = document.createElement("div");
@@ -2117,7 +2195,7 @@ function bn() {
 		i.innerHTML = "", i.appendChild(o);
 		return;
 	}
-	let w = Math.round(i.clientWidth || r.clientWidth || this.clientWidth || 0), T = Math.max(320, w || 600), E = Number(e.height) || 280, D = T - 14, O = E - 26, k = D - 44, A = O - 18, { yMin: j, yMax: M, ticks: N } = Mt(h ? [...p, ...h] : m ? [...p, ...m] : p, l.unit_format), P = {
+	let w = Math.round(i.clientWidth || r.clientWidth || this.clientWidth || 0), T = Math.max(320, w || 600), E = Number(e.height) || 280, D = T - 14, O = E - 26, k = D - 44, A = O - 18, { yMin: j, yMax: M, ticks: N } = Rt(h ? [...p, ...h] : m ? [...p, ...m] : p, l.unit_format), P = {
 		w: T,
 		h: E,
 		left: 44,
@@ -2130,16 +2208,13 @@ function bn() {
 		yMax: M
 	}, ee = N.map((e) => ({
 		y: 18 + (1 - $((e - j) / (M - j || 1), 0, 1)) * A,
-		label: rt(e)
+		label: st(e)
 	})), te = [];
-	for (let e = 0; e <= v; e += 2) {
-		let t = 44 + e / v * k, r = new Date(_.getTime() + e * 3600 * 1e3);
-		te.push({
-			x: t,
-			label: mt(r, n).slice(0, 2)
-		});
-	}
-	let ne = Nt(l, p, P, g, _, v), re = h ? Nt(l, h, P, g, _, v, () => "rgb(120,120,120)") : [], ie = 44 + $(((/* @__PURE__ */ new Date()).getTime() - _.getTime()) / (v * 3600 * 1e3), 0, 1) * k, F = "http://www.w3.org/2000/svg", I = document.createElementNS(F, "svg");
+	for (let { index: e, hour: t, repeated: r } of vt(_, v, n)) r || t % 2 != 0 || te.push({
+		x: 44 + e / v * k,
+		label: String(t).padStart(2, "0")
+	});
+	let ne = zt(l, p, P, g, _, v), re = h ? zt(l, h, P, g, _, v, () => "rgb(120,120,120)") : [], ie = 44 + $(((/* @__PURE__ */ new Date()).getTime() - _.getTime()) / (v * 3600 * 1e3), 0, 1) * k, F = "http://www.w3.org/2000/svg", I = document.createElementNS(F, "svg");
 	I.setAttribute("class", "svg"), I.setAttribute("preserveAspectRatio", "xMinYMin meet"), I.setAttribute("viewBox", `0 0 ${T} ${E}`);
 	let L = document.createElementNS(F, "rect");
 	L.setAttribute("x", "0"), L.setAttribute("y", "0"), L.setAttribute("width", String(T)), L.setAttribute("height", String(E)), L.setAttribute("fill", "transparent"), L.setAttribute("pointer-events", "all"), I.appendChild(L);
@@ -2167,8 +2242,8 @@ function bn() {
 		let i = document.createElementNS(F, "text");
 		i.setAttribute("x", 44 + k * .75), i.setAttribute("y", 34), i.setAttribute("text-anchor", "middle"), i.setAttribute("font-size", "16"), i.setAttribute("fill", "rgba(120,120,120,0.8)"), i.textContent = q("label_tomorrow", t), I.appendChild(i);
 	}
-	It(I, F, re), It(I, F, ne), i.innerHTML = "", i.appendChild(I);
-	let ae = new Date(_.getTime() + v * 3600 * 1e3), oe = Pt(_, v, 44, k), R = Ft(18, A, j, M), z = null;
+	Ht(I, F, re), Ht(I, F, ne), i.innerHTML = "", i.appendChild(I);
+	let ae = new Date(_.getTime() + v * 3600 * 1e3), oe = Bt(_, v, 44, k), R = Vt(18, A, j, M), z = null;
 	l.show_hover_line && (z = document.createElementNS(F, "line"), z.setAttribute("stroke-width", "1.2"), z.setAttribute("stroke-dasharray", "3 3"), z.setAttribute("stroke", "rgba(120,120,120,0.7)"), z.setAttribute("y1", 18), z.setAttribute("y2", O), z.style.display = "none", I.appendChild(z));
 	let B = document.createElementNS(F, "circle");
 	B.setAttribute("r", "4.5"), B.setAttribute("fill", "#ffffff"), B.setAttribute("stroke", "rgba(0,0,0,0.45)"), B.setAttribute("stroke-width", "1"), B.style.display = "none", I.appendChild(B);
@@ -2185,15 +2260,7 @@ function bn() {
 		let t = x[e].start.getTime(), n = x[e + 1].start.getTime();
 		le.push((t + n) / 2);
 	}
-	let U = null;
-	if (d === "two_days" && f === "overlay" && h && h.length) {
-		U = /* @__PURE__ */ new Map();
-		for (let e of h) {
-			let t = Math.round((e.start.getTime() - _.getTime()) / 6e4);
-			U.set(t, e.price);
-		}
-	}
-	let ue = (e) => {
+	let U = d === "two_days" && f === "overlay" && !!h?.length, ue = (e) => {
 		if (!x.length) return null;
 		for (let t = 0; t < le.length; t++) if (e < le[t]) return x[t];
 		return x[x.length - 1];
@@ -2203,25 +2270,21 @@ function bn() {
 			a.style.display = "none", ce();
 			return;
 		}
-		let s = I.getBoundingClientRect(), c = 44 / T * s.width, u = D / T * s.width, p = $(($(e.clientX, o.left, o.right) - s.left - c) / (u - c), 0, 1), m = _.getTime() + p * v * 3600 * 1e3, y = ue(m);
-		if (y ||= this._lastBest, !y) return;
-		this._lastBest = y;
-		let b = mt(y.start, n), C = Y(y.price, l.decimals), w = x.indexOf(y), O = x[w + 1]?.start || ae, k = (oe(y.start) + oe(O)) / 2, A = R(y.price), j = null;
-		if (d === "two_days" && f === "overlay" && h && h.length && U) {
-			let e = Math.round((y.start.getTime() - _.getTime()) / 6e4), t = U.get(e);
-			t != null && (j = R(t));
-		}
-		if (se(k, A, j), d === "two_days" && f === "overlay" && h && h.length) {
-			let e = x.length > 1 ? Math.round((x[1].start.getTime() - x[0].start.getTime()) / 6e4) : 60, r = new Date(y.start.getTime() + e * 6e4), i = `${mt(y.start, n)}-${mt(r, n)}`, o = Math.round((y.start.getTime() - _.getTime()) / 6e4), s = yn(U, o), c = `${C} ${S}`, u = s === null ? "--" : `${Y(s, l.decimals)} ${S}`;
-			a.innerHTML = `<div><b>${it(i)}</b></div><div class="pg-sub">${q("label_today", t)}: ${it(c)}</div><div class="pg-sub">${q("label_tomorrow", t)}: ${it(u)}</div>`;
+		let s = I.getBoundingClientRect(), c = 44 / T * s.width, u = D / T * s.width, d = $(($(e.clientX, o.left, o.right) - s.left - c) / (u - c), 0, 1), f = _.getTime() + d * v * 3600 * 1e3, p = ue(f);
+		if (p ||= this._lastBest, !p) return;
+		this._lastBest = p;
+		let m = yt(p.start, n), y = J(p.price, l.decimals), b = x.indexOf(p), C = x[b + 1]?.start || ae, w = (oe(p.start) + oe(C)) / 2, O = R(p.price), k = U ? On(h, p.start, C, ae) : [];
+		if (se(w, O, k.length ? R(k[0]) : null), U) {
+			let e = x.length > 1 ? Math.round((x[1].start.getTime() - x[0].start.getTime()) / 6e4) : 60, r = new Date(p.start.getTime() + e * 6e4), i = `${yt(p.start, n)}-${yt(r, n)}`, o = `${y} ${S}`, s = k.length ? `${k.map((e) => J(e, l.decimals)).join(" / ")} ${S}` : "--";
+			a.innerHTML = `<div><b>${ct(i)}</b></div><div class="pg-sub">${q("label_today", t)}: ${ct(o)}</div><div class="pg-sub">${q("label_tomorrow", t)}: ${ct(s)}</div>`;
 		} else {
-			let e = kt(y.price, g, t);
-			a.innerHTML = `<div><b>${it(b)}</b> — ${it(C)} ${it(S)}</div><div class="pg-sub">${q("label_region", t)}: ${it(e)}</div>`;
+			let e = Ft(p.price, g, t);
+			a.innerHTML = `<div><b>${ct(m)}</b> — ${ct(y)} ${ct(S)}</div><div class="pg-sub">${q("label_region", t)}: ${ct(e)}</div>`;
 		}
-		let M = 18 / E * s.height + (s.top - o.top), N = k / T * s.width;
-		a.style.display = "block", a.style.left = `${N}px`, a.style.top = `${M + 10}px`;
-		let P = a.getBoundingClientRect(), ee = o.width - P.width / 2, te = $(N, P.width / 2, ee);
-		a.style.left = `${te}px`, a.style.display = "block";
+		let A = 18 / E * s.height + (s.top - o.top), j = w / T * s.width;
+		a.style.display = "block", a.style.left = `${j}px`, a.style.top = `${A + 10}px`;
+		let M = a.getBoundingClientRect(), N = o.width - M.width / 2, P = $(j, M.width / 2, N);
+		a.style.left = `${P}px`, a.style.display = "block";
 	}, fe = (e) => {
 		e && e.pointerType && e.pointerType !== "mouse" || (a.style.display = "none", ce());
 	}, pe = (e) => {
@@ -2235,22 +2298,23 @@ function bn() {
 }
 //#endregion
 //#region src/price-graph-card.ts
-var xn = () => window.customCardHelpers || null, Sn = "2026.8.6";
-function Cn(e, t, n) {
+var An = () => window.customCardHelpers || null, jn = "2026.10.0";
+function Mn(e, t, n) {
 	return Math.max(t, Math.min(n, e));
 }
-var wn = class extends be {
+var Nn = class extends be {
 	static get properties() {
 		return {
-			hass: {},
 			_config: { state: !0 },
 			_dayView: { state: !0 }
 		};
 	}
+	static styles = a(En);
 	set hass(e) {
-		this._hass = e, this._effectiveHassCache = null, this.isConnected && this._scheduleClockUpdate();
-		let t = J(e);
-		t !== this._loadedLang && (this._loadedLang = t, tt(t).then(() => this.requestUpdate())), this.requestUpdate();
+		let t = this._hass;
+		this._hass = e, this._effectiveHassCache = null;
+		let n = at(e);
+		n !== this._loadedLang && (this._loadedLang = n, it(n).then(() => this.requestUpdate())), et(t, e, this._getWatchedEntityIds()) && (this.isConnected && this._scheduleClockUpdate(), this.requestUpdate("hass", t));
 	}
 	get hass() {
 		if (!this._hass || !this._contextStates || this._hass.states === this._contextStates) return this._hass;
@@ -2280,15 +2344,10 @@ var wn = class extends be {
 		}, this.dispatchEvent(e);
 	}
 	_observedStatesChanged(e, t) {
-		let n = /* @__PURE__ */ new Set();
-		this._config?.entity && n.add(this._config.entity);
-		for (let e of W(this._config?.content_items)) e.source === "entity" && e.entity && n.add(e.entity);
-		for (let [e, t] of [[this._config?.title_item_left, "title"], [this._config?.title_item_right, "attribute"]]) {
-			let r = G(e, t, "");
-			r.source === "entity" && r.entity && n.add(r.entity);
-		}
-		for (let r of n) if (e?.[r] !== t?.[r]) return !0;
-		return !1;
+		return $e(e, t, this._getWatchedEntityIds());
+	}
+	_getWatchedEntityIds() {
+		return this._watchedEntityIdsFor !== this._config && (this._watchedEntityIds = Qe(this._config), this._watchedEntityIdsFor = this._config), this._watchedEntityIds;
 	}
 	static async getConfigElement() {
 		return document.createElement(Ce);
@@ -2303,7 +2362,7 @@ var wn = class extends be {
 		this._dayView = t === "tomorrow" || t === "two_days" ? t : "today", this._lastDayCtx = null, this._lastGraphSignature = null, this.isConnected && this._scheduleClockUpdate();
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), this._statesUnsubscribe?.(), this._statesUnsubscribe = null, this._contextStates = null, this._effectiveHassCache = null, this._unbindGraphPointer(), this._disconnectResizeObserver(), clearTimeout(this._holdTimer), clearTimeout(this._tapTimer), clearTimeout(this._slotHoldTimer), clearTimeout(this._slotTapTimer), clearTimeout(this._clockTimer), this._clockTimer = null, this._lastDayCtx = null, this._lastGraphSignature = null;
+		super.disconnectedCallback(), this._statesUnsubscribe?.(), this._statesUnsubscribe = null, this._contextStates = null, this._effectiveHassCache = null, this._unbindGraphPointer(), this._disconnectResizeObserver(), clearTimeout(this._holdTimer), clearTimeout(this._tapTimer), clearTimeout(this._slotHoldTimer), clearTimeout(this._slotTapTimer), clearTimeout(this._clockTimer), this._clockTimer = null, this._lastDayCtx = null, this._lastGraphSignature = null, this._lastGraphHost = null;
 	}
 	getCardSize() {
 		let e = Math.round(this.getBoundingClientRect?.().height || 0);
@@ -2320,13 +2379,13 @@ var wn = class extends be {
 		};
 	}
 	render() {
-		return vn.call(this);
+		return Tn.call(this);
 	}
 	updated() {
-		return bn.call(this);
+		return kn.call(this);
 	}
 	_getDayCtx(e, t, n) {
-		let r = this._lastDayCtx, i = ft(/* @__PURE__ */ new Date(), n).getTime(), a = r && r.st === t && r.cfg === e && r.dayView === this._dayView && r.timeZone === n && r.dayKey === i ? r.value : pn(e, t, this._dayView, n);
+		let r = this._lastDayCtx, i = ht(/* @__PURE__ */ new Date(), n).getTime(), a = r && r.st === t && r.cfg === e && r.dayView === this._dayView && r.timeZone === n && r.dayKey === i ? r.value : bn(e, t, this._dayView, n);
 		return this._lastDayCtx = {
 			st: t,
 			cfg: e,
@@ -2339,7 +2398,7 @@ var wn = class extends be {
 	_scheduleClockUpdate() {
 		clearTimeout(this._clockTimer), this._clockTimer = setTimeout(() => {
 			this._lastGraphSignature = null, this.requestUpdate(), this._scheduleClockUpdate();
-		}, ht());
+		}, bt());
 	}
 	_buildGraphSignature(e, t, n, r, i, a, o) {
 		let s = t?.attributes || {}, c = Array.isArray(s.data) ? s.data : [], l = [
@@ -2387,7 +2446,7 @@ var wn = class extends be {
 		});
 	}
 	_setDayView(e) {
-		let t = fn(e);
+		let t = yn(e);
 		this._dayView !== t && (this._dayView = t, this._lastDayCtx = null, this._lastGraphSignature = null, this.requestUpdate());
 	}
 	_syncResizeObserver(...e) {
@@ -2422,7 +2481,7 @@ var wn = class extends be {
 			let n = Math.ceil((t.scrollWidth || 0) - (e.clientWidth || 0));
 			if (n > 2) {
 				e.classList.add("marquee"), e.style.setProperty("--marquee-shift", `${n}px`);
-				let t = Cn(4 + n / 22, 4, 12);
+				let t = Mn(4 + n / 22, 4, 12);
 				e.style.setProperty("--marquee-duration", `${t}s`);
 			} else e.classList.remove("marquee"), e.style.removeProperty("--marquee-shift"), e.style.removeProperty("--marquee-duration");
 		});
@@ -2472,7 +2531,7 @@ var wn = class extends be {
 		this._hasActionConfig(t) && this._dispatchAction(n, e);
 	}
 	_dispatchAction(e, t) {
-		let n = xn();
+		let n = An();
 		if (n?.handleAction) {
 			n.handleAction(this, this.hass, e, t);
 			return;
@@ -2505,7 +2564,7 @@ var wn = class extends be {
 	_runSlotAction(e, t) {
 		if (!this.hass || !this._config) return;
 		let { action: n, config: r } = this._getSlotActionConfig(e, t);
-		!r || !this._hasActionConfig(n) || this._dispatchAction(r, t);
+		r && this._hasActionConfig(n) && this._dispatchAction(r, t);
 	}
 	_onHeaderPointerDown() {
 		clearTimeout(this._holdTimer), this._holdFired = !1;
@@ -2521,12 +2580,21 @@ var wn = class extends be {
 		clearTimeout(this._holdTimer);
 	}
 	_onHeaderClick() {
-		this._holdFired || (clearTimeout(this._tapTimer), this._tapTimer = setTimeout(() => {
-			this._runAction("tap");
-		}, 200));
+		if (!this._holdFired) {
+			if (clearTimeout(this._tapTimer), !this._hasActionConfig(this._getActionConfig("double_tap").action)) {
+				this._runAction("tap");
+				return;
+			}
+			this._tapTimer = setTimeout(() => {
+				this._runAction("tap");
+			}, 200);
+		}
 	}
 	_onHeaderDblClick() {
-		clearTimeout(this._tapTimer), this._runAction("double_tap");
+		this._hasActionConfig(this._getActionConfig("double_tap").action) && (clearTimeout(this._tapTimer), this._runAction("double_tap"));
+	}
+	_onHeaderKeyDown(e) {
+		Sn(e) && (e.preventDefault(), this._runAction("tap"));
 	}
 	_onSlotPointerDown(e, t) {
 		if (!e?.actions?.enabled) return;
@@ -2543,12 +2611,21 @@ var wn = class extends be {
 		t?.stopPropagation?.(), clearTimeout(this._slotHoldTimer);
 	}
 	_onSlotClick(e, t) {
-		e?.actions?.enabled && (t?.stopPropagation?.(), !this._slotHoldFired && (clearTimeout(this._slotTapTimer), this._slotTapTimer = setTimeout(() => {
-			this._runSlotAction(e, "tap");
-		}, 200)));
+		if (e?.actions?.enabled && (t?.stopPropagation?.(), !this._slotHoldFired)) {
+			if (clearTimeout(this._slotTapTimer), !this._hasActionConfig(this._getSlotActionConfig(e, "double_tap").action)) {
+				this._runSlotAction(e, "tap");
+				return;
+			}
+			this._slotTapTimer = setTimeout(() => {
+				this._runSlotAction(e, "tap");
+			}, 200);
+		}
 	}
 	_onSlotDblClick(e, t) {
-		e?.actions?.enabled && (t?.stopPropagation?.(), clearTimeout(this._slotTapTimer), this._runSlotAction(e, "double_tap"));
+		e?.actions?.enabled && (t?.stopPropagation?.(), this._hasActionConfig(this._getSlotActionConfig(e, "double_tap").action) && (clearTimeout(this._slotTapTimer), this._runSlotAction(e, "double_tap")));
+	}
+	_onSlotKeyDown(e, t) {
+		e?.actions?.enabled && Sn(t) && (t.preventDefault(), t.stopPropagation(), this._runSlotAction(e, "tap"));
 	}
 	_onDayButtonPointerDown(e) {
 		let t = e.currentTarget;
@@ -2561,15 +2638,15 @@ var wn = class extends be {
 		n.style.left = `${i}px`, n.style.top = `${a}px`, n.classList.remove("run"), n.offsetWidth, n.classList.add("run");
 	}
 };
-customElements.get("price-graph-card") || customElements.define(Se, wn), window.customCards = window.customCards || [], window.customCards.push({
+customElements.get("price-graph-card") || customElements.define(Se, Nn), window.customCards = window.customCards || [], window.customCards.push({
 	type: Se,
 	name: "Price Graph Card",
 	description: "Spot market electricity price step graph with auto thresholds.",
-	version: Sn
+	version: jn
 });
 //#endregion
 //#region src/editor-styles.ts
-var Tn = o`
+var Pn = o`
       .wrap { padding: 8px 0; }
       .row { margin-top: 12px; }
       .row ha-form { width: 100%; }
@@ -2647,14 +2724,14 @@ var Tn = o`
     `;
 //#endregion
 //#region src/editor-options.ts
-function En(e, t) {
+function Fn(e, t) {
 	let n = e?.states?.[t]?.attributes;
 	return !n || typeof n != "object" ? [] : Object.keys(n).filter((e) => e !== "data").sort((e, t) => e.localeCompare(t)).map((e) => ({
 		value: e,
 		label: e
 	}));
 }
-function Dn(e) {
+function In(e) {
 	return [
 		{
 			value: "attribute",
@@ -2686,7 +2763,7 @@ function Dn(e) {
 		}
 	];
 }
-function On(e, t) {
+function Ln(e, t) {
 	return e ? [
 		{
 			value: "cheap",
@@ -2712,7 +2789,7 @@ function On(e, t) {
 		label: q("region_above_avg", t)
 	}];
 }
-function kn(e) {
+function Rn(e) {
 	return [
 		{
 			value: "selected",
@@ -2732,8 +2809,8 @@ function kn(e) {
 		}
 	];
 }
-function An(e, t, n) {
-	let r = e.unit_format === "minor" ? Yt(e, t, n) || q("unit_minor", n) : t || q("unit_currency", n);
+function zn(e, t, n) {
+	let r = e.unit_format === "minor" ? nn(e, t, n) || q("unit_minor", n) : t || q("unit_currency", n);
 	return [{
 		value: "value_only",
 		label: r
@@ -2742,22 +2819,22 @@ function An(e, t, n) {
 		label: `${r}/kWh`
 	}];
 }
-function jn(e) {
+function Bn(e) {
 	return [{
 		value: "title",
 		label: q("editor_content_source_title", e)
-	}, ...Dn(e)];
+	}, ...In(e)];
 }
-function Mn(e) {
+function Vn(e) {
 	return e === "title_item_left" ? "title" : "attribute";
 }
 //#endregion
 //#region src/editor-sanitize.ts
-function Nn(e, t) {
+function Hn(e, t) {
 	let n = { ...e };
 	delete n.title;
-	let r = n.currency_override || "auto", i = r === "auto" ? t() : r === "custom" ? String(n.currency_custom || "").trim().toUpperCase() : r, a = i ? Gt(i) : !1, o = n.unit_format !== "currency";
-	if (r === "auto" && delete n.currency_override, r !== "custom" && delete n.currency_custom, o && !a || (delete n.unit_factor, delete n.minor_label), !n.detailed_colors) delete n.use_fixed_p20, delete n.fixed_p20_value, delete n.use_fixed_avg, delete n.fixed_avg_value, delete n.use_fixed_expensive, delete n.fixed_expensive_value;
+	let r = n.currency_override || "auto", i = r === "auto" ? t() : r === "custom" ? String(n.currency_custom || "").trim().toUpperCase() : r, a = i ? Qt(i) : !1, o = n.unit_format !== "currency";
+	if (r === "auto" && delete n.currency_override, r !== "custom" && delete n.currency_custom, (!o || a) && (delete n.unit_factor, delete n.minor_label), !n.detailed_colors) delete n.use_fixed_p20, delete n.fixed_p20_value, delete n.use_fixed_avg, delete n.fixed_avg_value, delete n.use_fixed_expensive, delete n.fixed_expensive_value;
 	else for (let [e, t] of [
 		["use_fixed_p20", "fixed_p20_value"],
 		["use_fixed_avg", "fixed_avg_value"],
@@ -2781,7 +2858,7 @@ function Nn(e, t) {
 }
 //#endregion
 //#region src/editor-item-renderers.ts
-function Pn(e) {
+function Un(e) {
 	return {
 		enabled: !!e?.enabled,
 		tap_action: e?.tap_action || { action: "more-info" },
@@ -2791,8 +2868,8 @@ function Pn(e) {
 		target_entity: e?.target_entity || ""
 	};
 }
-function Fn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEntity: a }) {
-	let o = Pn(e.actions), s = (e) => i({ actions: {
+function Wn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEntity: a }) {
+	let o = Un(e.actions), s = (e) => i({ actions: {
 		...o,
 		...e
 	} }), c = (e) => {
@@ -2872,7 +2949,7 @@ function Fn({ item: e, index: t, hass: n, lang: r, onPatch: i, onEnableTargetEnt
     </div>
   `;
 }
-function In({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
+function Gn({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
 	if (e.source === "title") return R``;
 	if (e.source === "price_level") return R`
         <div class="two-col">
@@ -2892,7 +2969,7 @@ function In({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
         <div class="row">
           <ha-form
             .hass=${t}
-            .data=${{ price_level: Et(e.price_level, i) }}
+            .data=${{ price_level: Mt(e.price_level, i) }}
             .schema=${[{
 			name: "price_level",
 			selector: { select: {
@@ -3070,11 +3147,11 @@ function In({ item: e, hass: t, lang: n, onPatch: r, mode: i = "content" }) {
       ` : R``}
     `;
 }
-function Ln(e, t = !1) {
+function Kn(e, t = !1) {
 	return !t || e?.source !== "current_price" || !!e?.time_overwrite;
 }
-function Rn({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallback: a = "attribute", onPatch: o, mode: s = "content", wrapped: c = !0, showRemove: l = !1, onRemove: u = null, hideLabelWhenCurrentPrice: d = !1 }) {
-	let f = Ln(e, d), p = R`
+function qn({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallback: a = "attribute", onPatch: o, mode: s = "content", wrapped: c = !0, showRemove: l = !1, onRemove: u = null, hideLabelWhenCurrentPrice: d = !1 }) {
+	let f = Kn(e, d), p = R`
       ${t ? R`<div class="slot-card-title">${t}</div>` : R``}
       <div class="two-col">
         ${f ? R`
@@ -3122,7 +3199,7 @@ function Rn({ item: e, title: t, hass: n, lang: r, sourceOptions: i, sourceFallb
     `;
 	return c ? R`<div class="slot-card">${p}</div>` : p;
 }
-function zn({ item: e, key: t, title: n, hass: r, lang: i }) {
+function Jn({ item: e, key: t, title: n, hass: r, lang: i }) {
 	let a = this._headerDefaultSource(t);
 	return this._renderItemEditor({
 		item: e,
@@ -3138,7 +3215,7 @@ function zn({ item: e, key: t, title: n, hass: r, lang: i }) {
 		hideLabelWhenCurrentPrice: !0
 	});
 }
-function Bn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, wrapped: o = !0, showRemove: s = !0 }) {
+function Yn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, wrapped: o = !0, showRemove: s = !0 }) {
 	let c = a || this._contentSourceOptions(i), l = (e) => this._updateContentItem(t, e), u = R`
       ${this._renderItemEditor({
 		item: e,
@@ -3154,7 +3231,7 @@ function Bn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, w
 		hideLabelWhenCurrentPrice: !1,
 		wrapped: !1
 	})}
-      ${Fn({
+      ${Wn({
 		item: e,
 		index: t,
 		hass: r,
@@ -3165,7 +3242,7 @@ function Bn({ item: e, index: t, title: n, hass: r, lang: i, sourceOptions: a, w
     `;
 	return o ? R`<div class="slot-card">${u}</div>` : u;
 }
-function Vn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, lang: a }) {
+function Xn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, lang: a }) {
 	let o = this._config?.[e];
 	if (e !== "tap_action" && (!o?.action || o.action === "none")) return R``;
 	let s = this._config?.[t] === "other", c = this._boundComputeLabel ||= this._computeLabel.bind(this), l = (e) => {
@@ -3206,7 +3283,7 @@ function Vn({ actionKey: e, targetKey: t, entityKey: n, labelKey: r, hass: i, la
 }
 //#endregion
 //#region src/editor-render.ts
-function Hn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRight: i, infoItems: a, sourceOptions: o, currencyOverrideOptions: s, currencyLabel: c, minorLabel: l, showCustomCurrency: u, showMinorLabel: d, showFactor: f, effectiveCurrency: p, thresholdHints: m }) {
+function Zn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRight: i, infoItems: a, sourceOptions: o, currencyOverrideOptions: s, currencyLabel: c, minorLabel: l, showCustomCurrency: u, showMinorLabel: d, showFactor: f, effectiveCurrency: p, thresholdHints: m }) {
 	return R`
       <div class="wrap">
         <ha-form
@@ -3639,11 +3716,11 @@ function Hn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRigh
                       <div class="color-label">${this._label(t)}</div>
                       <div class="color-item">
                         <div class="color-swatch">
-                          <input type="color" .value=${St(this._config[e], n)} @input=${(t) => this._setColor(e, t.target.value)} />
+                          <input type="color" .value=${Dt(this._config[e], n)} @input=${(t) => this._setColor(e, t.target.value)} />
                         </div>
                         <ha-textfield
                           label="#"
-                          .value=${St(this._config[e], n)}
+                          .value=${Dt(this._config[e], n)}
                           @input=${(t) => this._setColor(e, t.target.value)}
                         ></ha-textfield>
                       </div>
@@ -3657,28 +3734,28 @@ function Hn({ hass: e, lang: t, computeLabel: n, titleItemLeft: r, titleItemRigh
 }
 //#endregion
 //#region src/editor-thresholds.ts
-function Un() {
+function Qn() {
 	return this._getSensorThresholdValue("p70");
 }
-function Wn(e) {
+function $n(e) {
 	let t = this._hass || this.hass, n = t?.states?.[this._config?.entity];
 	if (!n) return null;
-	let r = n.attributes, i = Z(bt(r), /* @__PURE__ */ new Date(), 0, gt(t));
-	return X(cn({
+	let r = n.attributes, i = Z(Tt(r), /* @__PURE__ */ new Date(), 0, xt(t));
+	return X(hn({
 		...this._config,
 		use_fixed_p20: !1,
 		use_fixed_avg: !1,
 		use_fixed_expensive: !1
 	}, r, i, 1, "today")?.[e]);
 }
-function Gn(e) {
+function er(e) {
 	return {
 		use_fixed_p20: "fixed_p20_value",
 		use_fixed_avg: "fixed_avg_value",
 		use_fixed_expensive: "fixed_expensive_value"
 	}[e] || "";
 }
-function Kn(e) {
+function tr(e) {
 	let t = {
 		use_fixed_p20: "p20",
 		use_fixed_avg: "avg",
@@ -3686,15 +3763,15 @@ function Kn(e) {
 	}[e];
 	return t ? this._getSensorThresholdValue(t) : null;
 }
-function qn(e, t) {
+function nr(e, t) {
 	let n = Number(t);
 	this._commit({
 		...this._config,
 		[e]: Number.isFinite(n) ? n : null
 	});
 }
-function Jn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
-	let i = !!this._config[e], a = r == null ? "" : String(Y(r, 3));
+function rr({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
+	let i = !!this._config[e], a = r == null ? "" : String(J(r, 3));
 	return R`
       <div class="two-col threshold-row">
         <div class="toggle-item threshold-toggle">
@@ -3718,7 +3795,7 @@ function Jn({ enabledKey: e, valueKey: t, labelKey: n, placeholderValue: r }) {
 }
 //#endregion
 //#region src/price-graph-card-editor.ts
-var Yn = class extends be {
+var ir = class extends be {
 	static get properties() {
 		return {
 			hass: {},
@@ -3734,14 +3811,14 @@ var Yn = class extends be {
 	}
 	set hass(e) {
 		this._hass = e;
-		let t = J(e);
-		t !== this._loadedLang && (this._loadedLang = t, tt(t).then(() => this.requestUpdate())), this.requestUpdate();
+		let t = at(e);
+		t !== this._loadedLang && (this._loadedLang = t, it(t).then(() => this.requestUpdate())), this.requestUpdate();
 	}
 	get hass() {
 		return this._hass;
 	}
 	static get styles() {
-		return Tn;
+		return Pn;
 	}
 	setConfig(e) {
 		this._config = He(e);
@@ -3782,10 +3859,10 @@ var Yn = class extends be {
 	}
 	_getCurrency() {
 		let e = (this._hass || this.hass)?.states?.[this._config?.entity];
-		return e ? Wt(e.attributes) : "";
+		return e ? Zt(e.attributes) : "";
 	}
 	_sanitizeConfig(e) {
-		return Nn(e, () => this._getCurrency());
+		return Hn(e, () => this._getCurrency());
 	}
 	_commit(e) {
 		let t = this._sanitizeConfig(e);
@@ -3796,13 +3873,13 @@ var Yn = class extends be {
 		}));
 	}
 	_label(e) {
-		return q(e, J(this._hass || this.hass));
+		return q(e, at(this._hass || this.hass));
 	}
 	_computeLabel(e) {
 		return this._label(Ie[e.name] || e.name);
 	}
 	_setColor(e, t) {
-		let n = St(t, this._config[e] || "#ffffff");
+		let n = Dt(t, this._config[e] || "#ffffff");
 		this._commit({
 			...this._config,
 			[e]: n
@@ -3818,26 +3895,26 @@ var Yn = class extends be {
 		t && i && n[i] == null && r !== null && (n[i] = r), this._commit(n);
 	}
 	_contentSourceOptions(e) {
-		return Dn(e);
+		return In(e);
 	}
 	_attributeOptions() {
-		return En(this._hass || this.hass, this._config?.entity);
+		return Fn(this._hass || this.hass, this._config?.entity);
 	}
 	_priceRangeDayOptions(e) {
-		return kn(e);
+		return Rn(e);
 	}
 	_itemUnitDisplayOptions(e) {
 		let t = this._config.currency_override || "auto", n = this._getCurrency(), r = t === "auto" ? n : t === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : t;
-		return An(this._config, r, e);
+		return zn(this._config, r, e);
 	}
 	_nextPriceLevelOptions(e) {
-		return On(!!this._config?.detailed_colors, e);
+		return Ln(!!this._config?.detailed_colors, e);
 	}
 	_headerSourceOptions(e) {
-		return jn(e);
+		return Bn(e);
 	}
 	_headerDefaultSource(e) {
-		return Mn(e);
+		return Vn(e);
 	}
 	_updateHeaderItem(e, t, n = "title") {
 		let r = G(this._config[e], n, "");
@@ -3850,19 +3927,19 @@ var Yn = class extends be {
 		});
 	}
 	_renderItemSourceFields(e) {
-		return In.call(this, e);
+		return Gn.call(this, e);
 	}
 	_renderItemEditor(e) {
-		return Rn.call(this, e);
+		return qn.call(this, e);
 	}
 	_renderHeaderItemEditor(e) {
-		return zn.call(this, e);
+		return Jn.call(this, e);
 	}
 	_renderSlotEditor(e) {
-		return Bn.call(this, e);
+		return Yn.call(this, e);
 	}
 	_renderOtherEntityAction(e) {
-		return Vn.call(this, e);
+		return Xn.call(this, e);
 	}
 	_updateContentItem(e, t) {
 		let n = W(this._config.content_items);
@@ -3916,27 +3993,27 @@ var Yn = class extends be {
     `;
 	}
 	_getP70SensorValue() {
-		return Un.call(this);
+		return Qn.call(this);
 	}
 	_getSensorThresholdValue(e) {
-		return Wn.call(this, e);
+		return $n.call(this, e);
 	}
 	_fixedThresholdValueKey(e) {
-		return Gn(e);
+		return er(e);
 	}
 	_getThresholdDefaultValue(e) {
-		return Kn.call(this, e);
+		return tr.call(this, e);
 	}
 	_setFixedThresholdValue(e, t) {
-		return qn.call(this, e, t);
+		return nr.call(this, e, t);
 	}
 	_renderFixedThresholdRow(e) {
-		return Jn.call(this, e);
+		return rr.call(this, e);
 	}
 	render() {
 		let e = this._hass || this.hass;
 		if (!e || !this._config) return R``;
-		let t = J(e), n = this._getCurrency(), r = this._config.currency_override || "auto", i = r === "auto" ? n : r === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : r, a = i ? Gt(i) : !1, o = this._config.unit_format !== "currency", s = o && !a, c = this._config.show_currency_override && r === "custom", l = o && !a, u = i || q("unit_currency", t), d = Yt(this._config, i, t) || "", f = this._config.detailed_colors ? {
+		let t = at(e), n = this._getCurrency(), r = this._config.currency_override || "auto", i = r === "auto" ? n : r === "custom" ? String(this._config.currency_custom || "").trim().toUpperCase() : r, a = i ? Qt(i) : !1, o = this._config.unit_format !== "currency", s = o && !a, c = this._config.show_currency_override && r === "custom", l = o && !a, u = i || q("unit_currency", t), d = nn(this._config, i, t) || "", f = this._config.detailed_colors ? {
 			p20: this._getSensorThresholdValue("p20"),
 			avg: this._getSensorThresholdValue("avg"),
 			p70: this._getSensorThresholdValue("p70")
@@ -3958,7 +4035,7 @@ var Yn = class extends be {
 				label: q("currency_custom", t)
 			}
 		];
-		return Hn.call(this, {
+		return Zn.call(this, {
 			hass: e,
 			lang: t,
 			computeLabel: p,
@@ -3977,5 +4054,5 @@ var Yn = class extends be {
 		});
 	}
 };
-customElements.get("price-graph-card-editor") || customElements.define(Ce, Yn);
+customElements.get("price-graph-card-editor") || customElements.define(Ce, ir);
 //#endregion
